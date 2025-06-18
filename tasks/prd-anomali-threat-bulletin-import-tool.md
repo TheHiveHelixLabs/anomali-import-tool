@@ -12,6 +12,7 @@ The Anomali Threat Bulletin Import Tool is a standalone Windows application desi
 4. **Flexible Integration**: Support multiple Anomali API versions and instances
 5. **Audit Compliance**: Maintain NIST-compliant security practices and comprehensive audit trails
 6. **Error Resilience**: Provide fallback options for failed imports and clear user feedback
+7. **Version Control Integration**: Automatically commit and push completed tasks to Git repositories for seamless development workflow
 
 ## User Stories
 
@@ -21,6 +22,8 @@ The Anomali Threat Bulletin Import Tool is a standalone Windows application desi
 4. **As a security administrator**, I want to configure custom naming templates so that bulletins follow our organization's naming conventions
 5. **As a security analyst**, I want to preview and confirm imports before submission so that I can verify data accuracy
 6. **As a compliance officer**, I want comprehensive audit trails of all import activities so that we maintain proper documentation
+7. **As a developer**, I want the system to automatically commit and push my completed work to Git so that version control is maintained without manual intervention
+8. **As a project manager**, I want automatic Git integration to track task completion and maintain code history for project oversight
 
 ## Functional Requirements
 
@@ -198,6 +201,22 @@ The Anomali Threat Bulletin Import Tool is a standalone Windows application desi
 115. **FR-115**: The system must implement canary deployments for production stability
 116. **FR-116**: The system must maintain 99.9% uptime SLA with automated monitoring
 
+### Version Control & Task Management Integration
+117. **FR-117**: The system must integrate with Git version control for automatic code commits upon task completion
+118. **FR-118**: The system must support configurable Git repository settings (remote URL, branch, credentials)
+119. **FR-119**: The system must automatically commit code changes with standardized commit messages following Conventional Commits format
+120. **FR-120**: The system must support automatic pushing to remote Git repositories upon successful task completion
+121. **FR-121**: The system must provide Git commit templates with task metadata (task ID, completion status, timestamp)
+122. **FR-122**: The system must handle Git authentication securely using SSH keys or personal access tokens
+123. **FR-123**: The system must support Git branch management for feature-based development workflows
+124. **FR-124**: The system must provide rollback capabilities for failed Git operations
+125. **FR-125**: The system must maintain Git operation audit logs for compliance tracking
+126. **FR-126**: The system must support Git hooks for pre-commit validation and post-commit actions
+127. **FR-127**: The system must integrate with popular Git hosting platforms (GitHub, GitLab, Azure DevOps)
+128. **FR-128**: The system must support automatic creation of pull requests upon task completion
+129. **FR-129**: The system must validate Git repository state before attempting commits and pushes
+130. **FR-130**: The system must provide conflict resolution assistance for merge conflicts
+
 ## Non-Goals (Out of Scope)
 
 1. **Direct database access**: The tool will only interact via Anomali's API
@@ -238,6 +257,7 @@ The Anomali Threat Bulletin Import Tool is a standalone Windows application desi
 - **Logging**: Serilog with file and database sinks
 - **Database**: SQLite for local storage of settings and history
 - **Network**: HttpClient with Polly for retry policies and resilience
+- **Git Integration**: LibGit2Sharp for Git operations with SSH/HTTPS authentication and platform API integration
 
 ### API Integration
 - **Anomali ThreatStream API Support**: 
@@ -474,7 +494,7 @@ Based on enterprise best practices and the requirements analysis, the following 
 5. **Production Launch**: Final testing, compliance verification, go-live procedures
 
 ### Success Criteria for 10/10 Rating Across All 7 Categories
-- **All 116 functional requirements** implemented and validated
+- **All 130 functional requirements** implemented and validated
 - **Code Quality**: SonarQube score >95%, zero critical issues, <5% technical debt
 - **Code Stability**: 95%+ test coverage, 99.9% uptime, chaos engineering validated
 - **Security**: Zero critical vulnerabilities, penetration testing passed
