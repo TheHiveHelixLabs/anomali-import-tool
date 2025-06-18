@@ -1,0 +1,110 @@
+using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
+using AnomaliImportTool.Core.Application.DependencyInjection;
+using AnomaliImportTool.Core.Application.Interfaces.Infrastructure;
+
+namespace AnomaliImportTool.Git.DependencyInjection;
+
+/// <summary>
+/// Git service registration module for Git operations
+/// </summary>
+public static class GitServiceRegistration
+{
+    /// <summary>
+    /// Register all Git services
+    /// </summary>
+    /// <param name="services">Service collection</param>
+    /// <returns>Service collection for chaining</returns>
+    public static IServiceCollection AddGitServices(this IServiceCollection services)
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+
+        // Register services using attribute-based registration
+        services.AddServicesFromAssembly(assembly);
+
+        // Register Git-specific services
+        services.AddGitRepositoryServices(assembly);
+        services.AddGitOperationServices(assembly);
+        services.AddGitBranchServices(assembly);
+        services.AddGitCommitServices(assembly);
+
+        return services;
+    }
+
+    /// <summary>
+    /// Register Git repository services
+    /// </summary>
+    private static IServiceCollection AddGitRepositoryServices(this IServiceCollection services, Assembly assembly)
+    {
+        // Register Git repository implementations
+        services.AddImplementationsOf<IGitService>(ServiceLifetime.Scoped, assembly);
+        services.AddImplementationsOf<IGitRepositoryService>(ServiceLifetime.Scoped, assembly);
+        services.AddImplementationsOf<IGitCloneService>(ServiceLifetime.Scoped, assembly);
+        services.AddImplementationsOf<IGitInitService>(ServiceLifetime.Scoped, assembly);
+
+        return services;
+    }
+
+    /// <summary>
+    /// Register Git operation services
+    /// </summary>
+    private static IServiceCollection AddGitOperationServices(this IServiceCollection services, Assembly assembly)
+    {
+        // Register Git operation services
+        services.AddImplementationsOf<IGitPullService>(ServiceLifetime.Scoped, assembly);
+        services.AddImplementationsOf<IGitPushService>(ServiceLifetime.Scoped, assembly);
+        services.AddImplementationsOf<IGitFetchService>(ServiceLifetime.Scoped, assembly);
+        services.AddImplementationsOf<IGitMergeService>(ServiceLifetime.Scoped, assembly);
+        services.AddImplementationsOf<IGitRebaseService>(ServiceLifetime.Scoped, assembly);
+
+        return services;
+    }
+
+    /// <summary>
+    /// Register Git branch services
+    /// </summary>
+    private static IServiceCollection AddGitBranchServices(this IServiceCollection services, Assembly assembly)
+    {
+        // Register Git branch services
+        services.AddImplementationsOf<IGitBranchService>(ServiceLifetime.Scoped, assembly);
+        services.AddImplementationsOf<IGitCheckoutService>(ServiceLifetime.Scoped, assembly);
+        services.AddImplementationsOf<IGitTagService>(ServiceLifetime.Scoped, assembly);
+        services.AddImplementationsOf<IGitStashService>(ServiceLifetime.Scoped, assembly);
+
+        return services;
+    }
+
+    /// <summary>
+    /// Register Git commit services
+    /// </summary>
+    private static IServiceCollection AddGitCommitServices(this IServiceCollection services, Assembly assembly)
+    {
+        // Register Git commit services
+        services.AddImplementationsOf<IGitCommitService>(ServiceLifetime.Scoped, assembly);
+        services.AddImplementationsOf<IGitStatusService>(ServiceLifetime.Scoped, assembly);
+        services.AddImplementationsOf<IGitDiffService>(ServiceLifetime.Scoped, assembly);
+        services.AddImplementationsOf<IGitLogService>(ServiceLifetime.Scoped, assembly);
+        services.AddImplementationsOf<IGitBlameService>(ServiceLifetime.Scoped, assembly);
+
+        return services;
+    }
+}
+
+// Git service marker interfaces
+public interface IGitRepositoryService { }
+public interface IGitCloneService { }
+public interface IGitInitService { }
+public interface IGitPullService { }
+public interface IGitPushService { }
+public interface IGitFetchService { }
+public interface IGitMergeService { }
+public interface IGitRebaseService { }
+public interface IGitBranchService { }
+public interface IGitCheckoutService { }
+public interface IGitTagService { }
+public interface IGitStashService { }
+public interface IGitCommitService { }
+public interface IGitStatusService { }
+public interface IGitDiffService { }
+public interface IGitLogService { }
+public interface IGitBlameService { } 
