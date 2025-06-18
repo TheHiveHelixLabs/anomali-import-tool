@@ -18,7 +18,7 @@
 - `tests/AnomaliImportTool.Tests.Security/` - Security and penetration testing
 - `docs/user-guide/` - Comprehensive user documentation with screenshots
 - `docs/api/` - OpenAPI 3.0 specification and developer documentation
-- `docs/architecture/` - Architecture Decision Records (ADRs) and technical documentation
+- `docs/architecture/` - Architecture Decision Records (ADRs), technical documentation, and Git branching strategy
 - `scripts/build/` - CI/CD pipeline scripts and deployment automation
 - `config/` - Configuration templates and security policies
 
@@ -495,8 +495,9 @@
     - [ ] 5.9.9 Implement continuous UI testing integration with CI/CD
 
 - [ ] 6.0 **Git Integration & Development Workflow** (10/10 Rating Requirement)
+  - [x] 6.0.1 Establish Git branching strategy with main/develop branches and GitHub Flow workflow
   - [ ] 6.1 Implement LibGit2Sharp integration with secure SSH/HTTPS authentication
-    - [ ] 6.1.1 Create LibGit2Sharp wrapper with repository management
+    - [x] 6.1.1 Create LibGit2Sharp wrapper with repository management
     - [ ] 6.1.2 Implement SSH key authentication with secure key storage
     - [ ] 6.1.3 Create HTTPS authentication with personal access tokens
     - [ ] 6.1.4 Implement Git credential management with Windows Credential Manager
@@ -506,7 +507,7 @@
     - [ ] 6.1.8 Implement Git status monitoring and change detection
     - [ ] 6.1.9 Create comprehensive Git integration unit tests
   - [ ] 6.2 Develop automated commit functionality with Conventional Commits format
-    - [ ] 6.2.1 Implement Conventional Commits format with semantic versioning
+    - [x] 6.2.1 Implement Conventional Commits format with semantic versioning
     - [ ] 6.2.2 Create automated commit message generation with templates
     - [ ] 6.2.3 Implement commit validation and formatting rules
     - [ ] 6.2.4 Create staged changes management and selective commits
