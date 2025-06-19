@@ -1,118 +1,68 @@
 using System.Collections.Concurrent;
-using AnomaliImportTool.Core.Application.Interfaces.Services;
-using AnomaliImportTool.Core.Domain.SharedKernel.Primitives;
 using Microsoft.Extensions.Logging;
 
 namespace AnomaliImportTool.Infrastructure.DocumentProcessing;
 
 /// <summary>
-/// Factory implementation for document processing strategies.
-/// Implements the Open/Closed Principle by allowing new strategies to be registered without modifying existing code.
+/// Factory implementation for document processing strategies (STUB IMPLEMENTATION).
+/// This is a temporary stub to resolve compilation issues.
 /// </summary>
-public sealed class DocumentProcessingStrategyFactory : IDocumentProcessingStrategyFactory
+public sealed class DocumentProcessingStrategyFactory
 {
-    private readonly ConcurrentDictionary<Type, IDocumentProcessingStrategy> _strategies;
     private readonly ILogger<DocumentProcessingStrategyFactory> _logger;
     
-    public DocumentProcessingStrategyFactory(
-        IEnumerable<IDocumentProcessingStrategy> strategies,
-        ILogger<DocumentProcessingStrategyFactory> logger)
+    public DocumentProcessingStrategyFactory(ILogger<DocumentProcessingStrategyFactory> logger)
     {
-        _strategies = new ConcurrentDictionary<Type, IDocumentProcessingStrategy>();
-        _logger = logger;
-        
-        // Register all provided strategies
-        foreach (var strategy in strategies)
-        {
-            RegisterStrategy(strategy);
-        }
-        
-        _logger.LogInformation("Initialized DocumentProcessingStrategyFactory with {StrategyCount} strategies", 
-            _strategies.Count);
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger.LogInformation("Initialized DocumentProcessingStrategyFactory stub implementation");
     }
     
-    /// <inheritdoc />
-    public IDocumentProcessingStrategy? GetStrategy(FilePath filePath)
+    /// <summary>
+    /// Gets a strategy for processing the specified file (stub - returns null)
+    /// </summary>
+    /// <param name="filePath">File path</param>
+    /// <returns>Always null in stub implementation</returns>
+    public object? GetStrategy(string filePath)
     {
-        var extension = Path.GetExtension(filePath.Value).ToLowerInvariant();
-        
-        // Find strategies that can process this file, ordered by priority (descending)
-        var candidates = _strategies.Values
-            .Where(s => s.CanProcess(filePath))
-            .OrderByDescending(s => s.Priority)
-            .ToList();
-        
-        if (candidates.Count == 0)
-        {
-            _logger.LogWarning("No strategy found for file: {FilePath} with extension: {Extension}", 
-                filePath.Value, extension);
-            return null;
-        }
-        
-        var selectedStrategy = candidates.First();
-        _logger.LogDebug("Selected strategy {StrategyType} for file: {FilePath}", 
-            selectedStrategy.GetType().Name, filePath.Value);
-        
-        return selectedStrategy;
+        _logger.LogWarning("Strategy retrieval is not implemented in this stub version");
+        return null;
     }
     
-    /// <inheritdoc />
-    public IReadOnlyList<IDocumentProcessingStrategy> GetAllStrategies()
+    /// <summary>
+    /// Gets all registered strategies (stub - returns empty list)
+    /// </summary>
+    /// <returns>Empty list in stub implementation</returns>
+    public IReadOnlyList<object> GetAllStrategies()
     {
-        return _strategies.Values
-            .OrderByDescending(s => s.Priority)
-            .ToList()
-            .AsReadOnly();
+        return new List<object>().AsReadOnly();
     }
     
-    /// <inheritdoc />
+    /// <summary>
+    /// Gets supported file extensions (stub - returns empty list)
+    /// </summary>
+    /// <returns>Empty list in stub implementation</returns>
     public IReadOnlyList<string> GetSupportedExtensions()
     {
-        return _strategies.Values
-            .SelectMany(s => s.SupportedExtensions)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(ext => ext)
-            .ToList()
-            .AsReadOnly();
+        return new List<string>().AsReadOnly();
     }
     
-    /// <inheritdoc />
-    public void RegisterStrategy(IDocumentProcessingStrategy strategy)
+    /// <summary>
+    /// Registers a strategy (stub - does nothing)
+    /// </summary>
+    /// <param name="strategy">Strategy to register</param>
+    public void RegisterStrategy(object strategy)
     {
-        ArgumentNullException.ThrowIfNull(strategy);
-        
-        var strategyType = strategy.GetType();
-        
-        if (_strategies.TryAdd(strategyType, strategy))
-        {
-            _logger.LogInformation("Registered strategy {StrategyType} with extensions: {Extensions}", 
-                strategyType.Name, string.Join(", ", strategy.SupportedExtensions));
-        }
-        else
-        {
-            _logger.LogWarning("Strategy {StrategyType} is already registered", strategyType.Name);
-        }
+        _logger.LogWarning("Strategy registration is not implemented in this stub version");
     }
     
-    /// <inheritdoc />
+    /// <summary>
+    /// Unregisters a strategy (stub - always returns false)
+    /// </summary>
+    /// <param name="strategyType">Strategy type to unregister</param>
+    /// <returns>Always false in stub implementation</returns>
     public bool UnregisterStrategy(Type strategyType)
     {
-        ArgumentNullException.ThrowIfNull(strategyType);
-        
-        if (_strategies.TryRemove(strategyType, out var removedStrategy))
-        {
-            _logger.LogInformation("Unregistered strategy {StrategyType}", strategyType.Name);
-            
-            // Dispose if the strategy implements IDisposable
-            if (removedStrategy is IDisposable disposable)
-            {
-                disposable.Dispose();
-            }
-            
-            return true;
-        }
-        
-        _logger.LogWarning("Strategy {StrategyType} was not found for unregistration", strategyType.Name);
+        _logger.LogWarning("Strategy unregistration is not implemented in this stub version");
         return false;
     }
 } 

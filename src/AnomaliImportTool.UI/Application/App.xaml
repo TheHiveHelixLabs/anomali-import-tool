@@ -1,0 +1,38 @@
+﻿<Application x:Class="AnomaliImportTool.UI.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Hive Helix Labs Corporate Theme -->
+                <ResourceDictionary Source="ms-appx:///Themes/HiveHelixLabsTheme.xaml"/>
+                <!-- WinUI 3 Default Styles -->
+                <ResourceDictionary Source="ms-appx:///Microsoft.UI.Xaml/DensityStyles/Compact.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            
+            <!-- Corporate Colors -->
+            <Color x:Key="CorporateBlue">#FF3B82F6</Color>
+            <Color x:Key="CorporatePurple">#FF8B5CF6</Color>
+            <Color x:Key="CorporateRed">#FFEF4444</Color>
+            <Color x:Key="CorporateBlack">#FF111827</Color>
+            
+            <!-- Functional Colors -->
+            <Color x:Key="SuccessIndigo">#FF6366F1</Color>
+            <Color x:Key="WarningAmber">#FFF59E0B</Color>
+            <Color x:Key="InfoCyan">#FF06B6D4</Color>
+            <Color x:Key="SecondaryGrey">#FF6B7280</Color>
+            <Color x:Key="BackgroundLight">#FFF3F4F6</Color>
+            <Color x:Key="BackgroundDark">#FF1F2937</Color>
+            
+            <!-- Corporate Brushes -->
+            <SolidColorBrush x:Key="CorporateBlueBrush" Color="{StaticResource CorporateBlue}"/>
+            <SolidColorBrush x:Key="CorporatePurpleBrush" Color="{StaticResource CorporatePurple}"/>
+            <SolidColorBrush x:Key="CorporateRedBrush" Color="{StaticResource CorporateRed}"/>
+            <SolidColorBrush x:Key="CorporateBlackBrush" Color="{StaticResource CorporateBlack}"/>
+            
+            <!-- Application Title -->
+            <x:String x:Key="ApplicationTitle">Anomali Threat Bulletin Import Tool</x:String>
+            <x:String x:Key="CompanyName">Hive Helix Labs</x:String>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

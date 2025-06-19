@@ -1,0 +1,49 @@
+{
+  "TestConfiguration": {
+    "ApplicationPath": {
+      "Windows": "..\\..\\..\\src\\AnomaliImportTool.Uno\\AnomaliImportTool.Uno\\bin\\Debug\\net8.0-desktop\\AnomaliImportTool.Uno.exe",
+      "Linux": "../../../src/AnomaliImportTool.Uno/AnomaliImportTool.Uno/bin/Debug/net8.0-desktop/AnomaliImportTool.Uno",
+      "macOS": "../../../src/AnomaliImportTool.Uno/AnomaliImportTool.Uno/bin/Debug/net8.0-desktop/AnomaliImportTool.Uno.app"
+    },
+    "WebAssemblyUrl": "http://localhost:5000",
+    "TestTimeout": 30000,
+    "ImplicitWait": 10000,
+    "ScreenshotPath": "./Screenshots",
+    "LogLevel": "Information",
+    "RetryAttempts": 3,
+    "WaitForAppLaunch": 5000,
+    "ElementSearchTimeout": 10000,
+    "PlatformSettings": {
+      "Windows": {
+        "WindowDriverExecutable": "WinAppDriver.exe",
+        "WindowDriverUrl": "http://127.0.0.1:4723"
+      },
+      "WebAssembly": {
+        "BrowserType": "Chrome",
+        "BrowserArguments": [
+          "--no-sandbox",
+          "--disable-dev-shm-usage",
+          "--disable-gpu",
+          "--window-size=1920,1080"
+        ]
+      },
+      "Linux": {
+        "DisplayServer": "X11",
+        "XvfbDisplay": ":99"
+      }
+    },
+    "TestData": {
+      "SampleDocuments": {
+        "PdfFile": "./TestFiles/sample.pdf",
+        "WordFile": "./TestFiles/sample.docx",
+        "ExcelFile": "./TestFiles/sample.xlsx",
+        "TextFile": "./TestFiles/sample.txt"
+      },
+      "ApiConfiguration": {
+        "TestBaseUrl": "https://test.anomali.com/api/v2",
+        "TestUsername": "test_user",
+        "TestApiKey": "test_api_key_placeholder"
+      }
+    }
+  }
+} 

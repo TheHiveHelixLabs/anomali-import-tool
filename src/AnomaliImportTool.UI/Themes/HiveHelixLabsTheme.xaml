@@ -1,0 +1,873 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ================================================================ -->
+    <!-- HIVE HELIX LABS CORPORATE THEME - LIVING WORKSPACE              -->
+    <!-- Professional security tool styling with modern Windows UI       -->
+    <!-- ================================================================ -->
+
+    <!-- ================================================================ -->
+    <!-- COLOR SYSTEM - WCAG 2.1 AA COMPLIANT                           -->
+    <!-- ================================================================ -->
+    
+    <!-- Primary Corporate Colors -->
+    <Color x:Key="CorporateBlue">#3B82F6</Color>
+    <Color x:Key="CorporatePurple">#8B5CF6</Color>
+    <Color x:Key="CorporateRed">#EF4444</Color>
+    <Color x:Key="CorporateBlack">#111827</Color>
+    
+    <!-- Functional Colors -->
+    <Color x:Key="SuccessIndigo">#6366F1</Color>
+    <Color x:Key="WarningAmber">#F59E0B</Color>
+    <Color x:Key="InfoCyan">#06B6D4</Color>
+    <Color x:Key="SecondaryGrey">#6B7280</Color>
+    
+    <!-- Background Colors -->
+    <Color x:Key="BackgroundLight">#F3F4F6</Color>
+    <Color x:Key="BackgroundMedium">#E5E7EB</Color>
+    <Color x:Key="BackgroundDark">#1F2937</Color>
+    <Color x:Key="BackgroundCard">#FFFFFF</Color>
+    
+    <!-- Text Colors -->
+    <Color x:Key="TextPrimary">#111827</Color>
+    <Color x:Key="TextSecondary">#6B7280</Color>
+    <Color x:Key="TextOnDark">#F9FAFB</Color>
+    <Color x:Key="TextDisabled">#9CA3AF</Color>
+    
+    <!-- Border Colors -->
+    <Color x:Key="BorderLight">#E5E7EB</Color>
+    <Color x:Key="BorderMedium">#D1D5DB</Color>
+    <Color x:Key="BorderDark">#6B7280</Color>
+    
+    <!-- Shadow Colors -->
+    <Color x:Key="ShadowLight">#F3F4F6</Color>
+    <Color x:Key="ShadowMedium">#E5E7EB</Color>
+    <Color x:Key="ShadowDark">#6B7280</Color>
+
+    <!-- ================================================================ -->
+    <!-- BRUSH RESOURCES                                                 -->
+    <!-- ================================================================ -->
+    
+    <!-- Corporate Brushes -->
+    <SolidColorBrush x:Key="CorporateBlueBrush" Color="{StaticResource CorporateBlue}"/>
+    <SolidColorBrush x:Key="CorporatePurpleBrush" Color="{StaticResource CorporatePurple}"/>
+    <SolidColorBrush x:Key="CorporateRedBrush" Color="{StaticResource CorporateRed}"/>
+    <SolidColorBrush x:Key="CorporateBlackBrush" Color="{StaticResource CorporateBlack}"/>
+    
+    <!-- Functional Brushes -->
+    <SolidColorBrush x:Key="SuccessIndigoBrush" Color="{StaticResource SuccessIndigo}"/>
+    <SolidColorBrush x:Key="WarningAmberBrush" Color="{StaticResource WarningAmber}"/>
+    <SolidColorBrush x:Key="InfoCyanBrush" Color="{StaticResource InfoCyan}"/>
+    <SolidColorBrush x:Key="SecondaryGreyBrush" Color="{StaticResource SecondaryGrey}"/>
+    
+    <!-- Background Brushes -->
+    <SolidColorBrush x:Key="BackgroundLightBrush" Color="{StaticResource BackgroundLight}"/>
+    <SolidColorBrush x:Key="BackgroundMediumBrush" Color="{StaticResource BackgroundMedium}"/>
+    <SolidColorBrush x:Key="BackgroundDarkBrush" Color="{StaticResource BackgroundDark}"/>
+    <SolidColorBrush x:Key="BackgroundCardBrush" Color="{StaticResource BackgroundCard}"/>
+    
+    <!-- Text Brushes -->
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimary}"/>
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondary}"/>
+    <SolidColorBrush x:Key="TextOnDarkBrush" Color="{StaticResource TextOnDark}"/>
+    <SolidColorBrush x:Key="TextDisabledBrush" Color="{StaticResource TextDisabled}"/>
+    
+    <!-- Border Brushes -->
+    <SolidColorBrush x:Key="BorderLightBrush" Color="{StaticResource BorderLight}"/>
+    <SolidColorBrush x:Key="BorderMediumBrush" Color="{StaticResource BorderMedium}"/>
+    <SolidColorBrush x:Key="BorderDarkBrush" Color="{StaticResource BorderDark}"/>
+
+    <!-- ================================================================ -->
+    <!-- GRADIENT BRUSHES - PROFESSIONAL DEPTH                          -->
+    <!-- ================================================================ -->
+    
+    <!-- Card Shadow Gradient -->
+    <LinearGradientBrush x:Key="CardShadowBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="{StaticResource ShadowLight}" Offset="0"/>
+        <GradientStop Color="{StaticResource ShadowMedium}" Offset="0.5"/>
+        <GradientStop Color="{StaticResource ShadowDark}" Offset="1"/>
+    </LinearGradientBrush>
+    
+    <!-- Corporate Blue Gradient -->
+    <LinearGradientBrush x:Key="CorporateBlueGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="{StaticResource CorporateBlue}" Offset="0"/>
+        <GradientStop Color="{StaticResource CorporatePurple}" Offset="1"/>
+    </LinearGradientBrush>
+
+    <!-- ================================================================ -->
+    <!-- TYPOGRAPHY SYSTEM - PERFECT FOURTH SCALE                       -->
+    <!-- ================================================================ -->
+    
+    <!-- Font Family -->
+    <FontFamily x:Key="CorporateFont">Segoe UI</FontFamily>
+    <FontFamily x:Key="MonospaceFont">Consolas</FontFamily>
+    
+    <!-- Typography Scale (Perfect Fourth - 1.333 ratio) -->
+    <x:Double x:Key="FontSize10">10</x:Double>        <!-- Caption -->
+    <x:Double x:Key="FontSize12">12</x:Double>        <!-- Small -->
+    <x:Double x:Key="FontSize14">14</x:Double>        <!-- Body -->
+    <x:Double x:Key="FontSize16">16</x:Double>        <!-- Body Large -->
+    <x:Double x:Key="FontSize18">18</x:Double>        <!-- Subtitle -->
+    <x:Double x:Key="FontSize20">20</x:Double>        <!-- Title 3 -->
+    <x:Double x:Key="FontSize24">24</x:Double>        <!-- Title 2 -->
+    <x:Double x:Key="FontSize28">28</x:Double>        <!-- Title 1 -->
+    <x:Double x:Key="FontSize32">32</x:Double>        <!-- Display 3 -->
+    <x:Double x:Key="FontSize40">40</x:Double>        <!-- Display 2 -->
+    <x:Double x:Key="FontSize48">48</x:Double>        <!-- Display 1 -->
+
+    <!-- ================================================================ -->
+    <!-- SPACING SYSTEM - 8px GRID                                      -->
+    <!-- ================================================================ -->
+    
+    <Thickness x:Key="Spacing4">4</Thickness>       <!-- 0.5 units -->
+    <Thickness x:Key="Spacing8">8</Thickness>       <!-- 1 unit -->
+    <Thickness x:Key="Spacing12">12</Thickness>     <!-- 1.5 units -->
+    <Thickness x:Key="Spacing16">16</Thickness>     <!-- 2 units -->
+    <Thickness x:Key="Spacing20">20</Thickness>     <!-- 2.5 units -->
+    <Thickness x:Key="Spacing24">24</Thickness>     <!-- 3 units -->
+    <Thickness x:Key="Spacing32">32</Thickness>     <!-- 4 units -->
+    <Thickness x:Key="Spacing40">40</Thickness>     <!-- 5 units -->
+    <Thickness x:Key="Spacing48">48</Thickness>     <!-- 6 units -->
+    <Thickness x:Key="Spacing64">64</Thickness>     <!-- 8 units -->
+
+    <!-- ================================================================ -->
+    <!-- CORNER RADIUS SYSTEM                                           -->
+    <!-- ================================================================ -->
+    
+    <CornerRadius x:Key="CornerRadiusSmall">4</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusMedium">8</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusLarge">12</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusXLarge">16</CornerRadius>
+
+    <!-- ================================================================ -->
+    <!-- ELEVATION SYSTEM - MATERIAL DESIGN INSPIRED                    -->
+    <!-- ================================================================ -->
+    
+    <!-- Elevation 1 - Cards at rest -->
+    <x:Double x:Key="ElevationDepth1">1</x:Double>
+    <x:Double x:Key="ElevationBlur1">3</x:Double>
+    <x:Double x:Key="ElevationOpacity1">0.12</x:Double>
+    
+    <!-- Elevation 2 - Raised cards -->
+    <x:Double x:Key="ElevationDepth2">2</x:Double>
+    <x:Double x:Key="ElevationBlur2">6</x:Double>
+    <x:Double x:Key="ElevationOpacity2">0.16</x:Double>
+    
+    <!-- Elevation 3 - Modals, overlays -->
+    <x:Double x:Key="ElevationDepth3">4</x:Double>
+    <x:Double x:Key="ElevationBlur3">12</x:Double>
+    <x:Double x:Key="ElevationOpacity3">0.20</x:Double>
+
+    <!-- ================================================================ -->
+    <!-- ANIMATION TIMING - MATERIAL DESIGN                             -->
+    <!-- ================================================================ -->
+    
+    <!-- Standard Timing -->
+    <Duration x:Key="AnimationFast">0:0:0.150</Duration>
+    <Duration x:Key="AnimationStandard">0:0:0.300</Duration>
+    <Duration x:Key="AnimationSlow">0:0:0.500</Duration>
+    <Duration x:Key="AnimationExtra">0:0:1.000</Duration>
+    
+    <!-- Easing Functions -->
+    <CubicBezierEase x:Key="EaseStandard" ControlPoint1="0.4,0" ControlPoint2="0.2,1"/>
+    <CubicBezierEase x:Key="EaseDecelerate" ControlPoint1="0,0" ControlPoint2="0.2,1"/>
+    <CubicBezierEase x:Key="EaseAccelerate" ControlPoint1="0.4,0" ControlPoint2="1,1"/>
+
+    <!-- ================================================================ -->
+    <!-- BASE CONTROL STYLES                                            -->
+    <!-- ================================================================ -->
+    
+    <!-- Base Button Style -->
+    <Style x:Key="BaseButtonStyle" TargetType="Button">
+        <Setter Property="FontFamily" Value="{StaticResource CorporateFont}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize14}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Padding" Value="{StaticResource Spacing12}"/>
+        <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusMedium}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    
+    <!-- Primary Button Style -->
+    <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+        <Setter Property="Background" Value="{StaticResource CorporateBlueBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextOnDarkBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource CorporateBlueBrush}"/>
+    </Style>
+    
+    <!-- Secondary Button Style -->
+    <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+        <Setter Property="Background" Value="{StaticResource BackgroundCardBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource CorporateBlueBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource CorporateBlueBrush}"/>
+    </Style>
+
+    <!-- Card Style -->
+    <Style x:Key="CardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource BackgroundCardBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderLightBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusLarge}"/>
+        <Setter Property="Padding" Value="{StaticResource Spacing24}"/>
+    </Style>
+
+    <!-- ================================================================ -->
+    <!-- TEXT STYLES                                                     -->
+    <!-- ================================================================ -->
+    
+    <!-- Display Text Styles -->
+    <Style x:Key="Display1TextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource CorporateFont}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize48}"/>
+        <Setter Property="FontWeight" Value="Light"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+    </Style>
+    
+    <Style x:Key="Display2TextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource CorporateFont}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize40}"/>
+        <Setter Property="FontWeight" Value="Light"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+    </Style>
+    
+    <!-- Title Text Styles -->
+    <Style x:Key="Title1TextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource CorporateFont}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize28}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+    </Style>
+    
+    <Style x:Key="Title2TextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource CorporateFont}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize24}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+    </Style>
+    
+    <!-- Body Text Styles -->
+    <Style x:Key="BodyTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource CorporateFont}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize14}"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="LineHeight" Value="20"/>
+    </Style>
+    
+    <Style x:Key="BodyLargeTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource CorporateFont}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize16}"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="LineHeight" Value="24"/>
+    </Style>
+    
+    <!-- Caption Text Style -->
+    <Style x:Key="CaptionTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource CorporateFont}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize12}"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+    </Style>
+
+    <!-- ================================================================ -->
+    <!-- APPLICATION CONSTANTS                                          -->
+    <!-- ================================================================ -->
+    
+    <!-- Application Info -->
+    <x:String x:Key="ApplicationTitle">Anomali Threat Bulletin Import Tool</x:String>
+    <x:String x:Key="ApplicationSubtitle">Living Workspace Experience</x:String>
+    <x:String x:Key="CompanyName">Hive Helix Labs</x:String>
+    <x:String x:Key="CorporateTagline">Professional Security Intelligence</x:String>
+
+    <!-- Hive Helix Labs Corporate Theme Resources -->
+    <!-- Professional Corporate Identity with WCAG AA Compliance -->
+    <Color x:Key="HiveHelixPrimaryColor">#007ACC</Color>
+    <Color x:Key="HiveHelixSecondaryColor">#6B7380</Color>
+    <Color x:Key="HiveHelixAccentColor">#FF6B35</Color>
+    <Color x:Key="HiveHelixNeutralDarkColor">#323336</Color>
+    <Color x:Key="HiveHelixNeutralLightColor">#F8F9FA</Color>
+    
+    <!-- Brand Color Brushes -->
+    <SolidColorBrush x:Key="HiveHelixPrimaryBrush" Color="{StaticResource HiveHelixPrimaryColor}"/>
+    <SolidColorBrush x:Key="HiveHelixSecondaryBrush" Color="{StaticResource HiveHelixSecondaryColor}"/>
+    <SolidColorBrush x:Key="HiveHelixAccentBrush" Color="{StaticResource HiveHelixAccentColor}"/>
+    <SolidColorBrush x:Key="HiveHelixNeutralDarkBrush" Color="{StaticResource HiveHelixNeutralDarkColor}"/>
+    <SolidColorBrush x:Key="HiveHelixNeutralLightBrush" Color="{StaticResource HiveHelixNeutralLightColor}"/>
+
+    <!-- =================================== -->
+    <!-- LIGHT THEME COLORS -->
+    <!-- =================================== -->
+    
+    <!-- Background Colors -->
+    <Color x:Key="LightBackgroundPrimaryColor">#FFFFFF</Color>
+    <Color x:Key="LightBackgroundSecondaryColor">#F8F9FA</Color>
+    <Color x:Key="LightSurfacePrimaryColor">#FFFFFF</Color>
+    <Color x:Key="LightSurfaceSecondaryColor">#F1F3F4</Color>
+    
+    <!-- Text Colors -->
+    <Color x:Key="LightTextPrimaryColor">#323336</Color>
+    <Color x:Key="LightTextSecondaryColor">#5F6368</Color>
+    <Color x:Key="LightTextDisabledColor">#9AA0A6</Color>
+    <Color x:Key="LightTextOnPrimaryColor">#FFFFFF</Color>
+    <Color x:Key="LightTextOnSecondaryColor">#FFFFFF</Color>
+    
+    <!-- Light Theme Brushes -->
+    <SolidColorBrush x:Key="LightBackgroundPrimaryBrush" Color="{StaticResource LightBackgroundPrimaryColor}"/>
+    <SolidColorBrush x:Key="LightBackgroundSecondaryBrush" Color="{StaticResource LightBackgroundSecondaryColor}"/>
+    <SolidColorBrush x:Key="LightSurfacePrimaryBrush" Color="{StaticResource LightSurfacePrimaryColor}"/>
+    <SolidColorBrush x:Key="LightSurfaceSecondaryBrush" Color="{StaticResource LightSurfaceSecondaryColor}"/>
+    <SolidColorBrush x:Key="LightTextPrimaryBrush" Color="{StaticResource LightTextPrimaryColor}"/>
+    <SolidColorBrush x:Key="LightTextSecondaryBrush" Color="{StaticResource LightTextSecondaryColor}"/>
+    <SolidColorBrush x:Key="LightTextDisabledBrush" Color="{StaticResource LightTextDisabledColor}"/>
+    <SolidColorBrush x:Key="LightTextOnPrimaryBrush" Color="{StaticResource LightTextOnPrimaryColor}"/>
+    <SolidColorBrush x:Key="LightTextOnSecondaryBrush" Color="{StaticResource LightTextOnSecondaryColor}"/>
+
+    <!-- =================================== -->
+    <!-- DARK THEME COLORS -->
+    <!-- =================================== -->
+    
+    <!-- Background Colors -->
+    <Color x:Key="DarkBackgroundPrimaryColor">#202124</Color>
+    <Color x:Key="DarkBackgroundSecondaryColor">#28292C</Color>
+    <Color x:Key="DarkSurfacePrimaryColor">#323336</Color>
+    <Color x:Key="DarkSurfaceSecondaryColor">#3C3D40</Color>
+    
+    <!-- Text Colors -->
+    <Color x:Key="DarkTextPrimaryColor">#F8F9FA</Color>
+    <Color x:Key="DarkTextSecondaryColor">#E8EAED</Color>
+    <Color x:Key="DarkTextDisabledColor">#9AA0A6</Color>
+    <Color x:Key="DarkTextOnPrimaryColor">#202124</Color>
+    <Color x:Key="DarkTextOnSecondaryColor">#F8F9FA</Color>
+    
+    <!-- Dark Theme Brushes -->
+    <SolidColorBrush x:Key="DarkBackgroundPrimaryBrush" Color="{StaticResource DarkBackgroundPrimaryColor}"/>
+    <SolidColorBrush x:Key="DarkBackgroundSecondaryBrush" Color="{StaticResource DarkBackgroundSecondaryColor}"/>
+    <SolidColorBrush x:Key="DarkSurfacePrimaryBrush" Color="{StaticResource DarkSurfacePrimaryColor}"/>
+    <SolidColorBrush x:Key="DarkSurfaceSecondaryBrush" Color="{StaticResource DarkSurfaceSecondaryColor}"/>
+    <SolidColorBrush x:Key="DarkTextPrimaryBrush" Color="{StaticResource DarkTextPrimaryColor}"/>
+    <SolidColorBrush x:Key="DarkTextSecondaryBrush" Color="{StaticResource DarkTextSecondaryColor}"/>
+    <SolidColorBrush x:Key="DarkTextDisabledBrush" Color="{StaticResource DarkTextDisabledColor}"/>
+    <SolidColorBrush x:Key="DarkTextOnPrimaryBrush" Color="{StaticResource DarkTextOnPrimaryColor}"/>
+    <SolidColorBrush x:Key="DarkTextOnSecondaryBrush" Color="{StaticResource DarkTextOnSecondaryColor}"/>
+
+    <!-- =================================== -->
+    <!-- STATUS COLORS -->
+    <!-- =================================== -->
+    
+    <Color x:Key="SuccessColor">#34A853</Color>
+    <Color x:Key="WarningColor">#FBBC04</Color>
+    <Color x:Key="ErrorColor">#EA4335</Color>
+    <Color x:Key="InfoColor">#4285F4</Color>
+    
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}"/>
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}"/>
+    <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ErrorColor}"/>
+    <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource InfoColor}"/>
+
+    <!-- =================================== -->
+    <!-- INTERACTIVE COLORS -->
+    <!-- =================================== -->
+    
+    <Color x:Key="ButtonPrimaryColor">#007ACC</Color>
+    <Color x:Key="ButtonSecondaryColor">#6B7380</Color>
+    <Color x:Key="ButtonHoverColor">#005A9C</Color>
+    <Color x:Key="ButtonPressedColor">#004A7C</Color>
+    <Color x:Key="ButtonDisabledColor">#E8EAED</Color>
+    
+    <SolidColorBrush x:Key="ButtonPrimaryBrush" Color="{StaticResource ButtonPrimaryColor}"/>
+    <SolidColorBrush x:Key="ButtonSecondaryBrush" Color="{StaticResource ButtonSecondaryColor}"/>
+    <SolidColorBrush x:Key="ButtonHoverBrush" Color="{StaticResource ButtonHoverColor}"/>
+    <SolidColorBrush x:Key="ButtonPressedBrush" Color="{StaticResource ButtonPressedColor}"/>
+    <SolidColorBrush x:Key="ButtonDisabledBrush" Color="{StaticResource ButtonDisabledColor}"/>
+
+    <!-- =================================== -->
+    <!-- PROFESSIONAL TYPOGRAPHY SYSTEM -->
+    <!-- =================================== -->
+    
+    <!-- Font Families -->
+    <FontFamily x:Key="PrimaryFontFamily">Segoe UI</FontFamily>
+    <FontFamily x:Key="SecondaryFontFamily">Segoe UI Variable</FontFamily>
+    <FontFamily x:Key="MonospaceFontFamily">Consolas, Courier New</FontFamily>
+    <FontFamily x:Key="IconFontFamily">Segoe MDL2 Assets</FontFamily>
+    
+    <!-- Display Typography -->
+    <Style x:Key="DisplayLargeTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="64"/>
+        <Setter Property="FontWeight" Value="Light"/>
+        <Setter Property="LineHeight" Value="72"/>
+        <Setter Property="Margin" Value="0,0,0,24"/>
+    </Style>
+    
+    <Style x:Key="DisplayMediumTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="48"/>
+        <Setter Property="FontWeight" Value="Light"/>
+        <Setter Property="LineHeight" Value="56"/>
+        <Setter Property="Margin" Value="0,0,0,20"/>
+    </Style>
+    
+    <Style x:Key="DisplaySmallTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="36"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="LineHeight" Value="44"/>
+        <Setter Property="Margin" Value="0,0,0,16"/>
+    </Style>
+    
+    <!-- Headline Typography -->
+    <Style x:Key="HeadlineLargeTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="32"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="LineHeight" Value="40"/>
+        <Setter Property="Margin" Value="0,0,0,16"/>
+    </Style>
+    
+    <Style x:Key="HeadlineMediumTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="28"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="LineHeight" Value="36"/>
+        <Setter Property="Margin" Value="0,0,0,14"/>
+    </Style>
+    
+    <Style x:Key="HeadlineSmallTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="24"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="LineHeight" Value="32"/>
+        <Setter Property="Margin" Value="0,0,0,12"/>
+    </Style>
+    
+    <!-- Title Typography -->
+    <Style x:Key="TitleLargeTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="22"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="LineHeight" Value="28"/>
+        <Setter Property="Margin" Value="0,0,0,10"/>
+    </Style>
+    
+    <Style x:Key="TitleMediumTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="LineHeight" Value="24"/>
+        <Setter Property="Margin" Value="0,0,0,8"/>
+    </Style>
+    
+    <Style x:Key="TitleSmallTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="LineHeight" Value="20"/>
+        <Setter Property="Margin" Value="0,0,0,6"/>
+    </Style>
+    
+    <!-- Body Typography -->
+    <Style x:Key="BodyLargeTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="LineHeight" Value="24"/>
+        <Setter Property="Margin" Value="0,0,0,12"/>
+    </Style>
+    
+    <Style x:Key="BodyMediumTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="LineHeight" Value="20"/>
+        <Setter Property="Margin" Value="0,0,0,10"/>
+    </Style>
+    
+    <Style x:Key="BodySmallTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="LineHeight" Value="16"/>
+        <Setter Property="Margin" Value="0,0,0,8"/>
+    </Style>
+    
+    <!-- Label Typography -->
+    <Style x:Key="LabelLargeTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="LineHeight" Value="20"/>
+        <Setter Property="Margin" Value="0,0,0,4"/>
+    </Style>
+    
+    <Style x:Key="LabelMediumTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="LineHeight" Value="16"/>
+        <Setter Property="Margin" Value="0,0,0,4"/>
+    </Style>
+    
+    <Style x:Key="LabelSmallTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="LineHeight" Value="14"/>
+        <Setter Property="Margin" Value="0,0,0,2"/>
+    </Style>
+
+    <!-- =================================== -->
+    <!-- FLUENT DESIGN EFFECTS -->
+    <!-- =================================== -->
+    
+    <!-- Shadow Effects -->
+    <DropShadowEffect x:Key="ElevationLow" BlurRadius="8" ShadowDepth="1" Opacity="0.14" Color="Black" Direction="270"/>
+    <DropShadowEffect x:Key="ElevationMedium" BlurRadius="16" ShadowDepth="2" Opacity="0.20" Color="Black" Direction="270"/>
+    <DropShadowEffect x:Key="ElevationHigh" BlurRadius="24" ShadowDepth="4" Opacity="0.24" Color="Black" Direction="270"/>
+    <DropShadowEffect x:Key="ElevationVeryHigh" BlurRadius="32" ShadowDepth="8" Opacity="0.28" Color="Black" Direction="270"/>
+    
+    <!-- Blur Effects -->
+    <BlurEffect x:Key="BlurSubtle" Radius="2"/>
+    <BlurEffect x:Key="BlurMedium" Radius="8"/>
+    <BlurEffect x:Key="BlurStrong" Radius="16"/>
+    
+    <!-- Corner Radius Values -->
+    <CornerRadius x:Key="CornerRadiusSmall">2</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusMedium">4</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusLarge">8</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusXLarge">12</CornerRadius>
+
+    <!-- =================================== -->
+    <!-- SPACING SYSTEM (8px Grid) -->
+    <!-- =================================== -->
+    
+    <sys:Double x:Key="SpacingXSmall" xmlns:sys="clr-namespace:System;assembly=mscorlib">4</sys:Double>
+    <sys:Double x:Key="SpacingSmall" xmlns:sys="clr-namespace:System;assembly=mscorlib">8</sys:Double>
+    <sys:Double x:Key="SpacingMedium" xmlns:sys="clr-namespace:System;assembly=mscorlib">16</sys:Double>
+    <sys:Double x:Key="SpacingLarge" xmlns:sys="clr-namespace:System;assembly=mscorlib">24</sys:Double>
+    <sys:Double x:Key="SpacingXLarge" xmlns:sys="clr-namespace:System;assembly=mscorlib">32</sys:Double>
+    <sys:Double x:Key="SpacingXXLarge" xmlns:sys="clr-namespace:System;assembly=mscorlib">48</sys:Double>
+    
+    <!-- Thickness Values -->
+    <Thickness x:Key="ThicknessXSmall">4</Thickness>
+    <Thickness x:Key="ThicknessSmall">8</Thickness>
+    <Thickness x:Key="ThicknessMedium">16</Thickness>
+    <Thickness x:Key="ThicknessLarge">24</Thickness>
+    <Thickness x:Key="ThicknessXLarge">32</Thickness>
+    <Thickness x:Key="ThicknessXXLarge">48</Thickness>
+
+    <!-- =================================== -->
+    <!-- PROFESSIONAL BUTTON STYLES -->
+    <!-- =================================== -->
+    
+    <Style x:Key="HiveHelixPrimaryButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource HiveHelixPrimaryBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource LightTextOnPrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource HiveHelixPrimaryBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="{StaticResource ThicknessMedium}"/>
+        <Setter Property="Margin" Value="{StaticResource ThicknessSmall}"/>
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Effect" Value="{StaticResource ElevationLow}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{StaticResource CornerRadiusMedium}"
+                            Effect="{TemplateBinding Effect}">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Margin="{TemplateBinding Padding}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{StaticResource ButtonHoverBrush}"/>
+                            <Setter Property="Effect" Value="{StaticResource ElevationMedium}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="{StaticResource ButtonPressedBrush}"/>
+                            <Setter Property="Effect" Value="{StaticResource ElevationLow}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Background" Value="{StaticResource ButtonDisabledBrush}"/>
+                            <Setter Property="Foreground" Value="{StaticResource LightTextDisabledBrush}"/>
+                            <Setter Property="Effect" Value="{x:Null}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <Style x:Key="HiveHelixSecondaryButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource LightSurfacePrimaryBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource LightTextPrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource HiveHelixSecondaryBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="{StaticResource ThicknessMedium}"/>
+        <Setter Property="Margin" Value="{StaticResource ThicknessSmall}"/>
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Effect" Value="{StaticResource ElevationLow}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{StaticResource CornerRadiusMedium}"
+                            Effect="{TemplateBinding Effect}">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Margin="{TemplateBinding Padding}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{StaticResource LightSurfaceSecondaryBrush}"/>
+                            <Setter Property="Effect" Value="{StaticResource ElevationMedium}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="{StaticResource LightBackgroundSecondaryBrush}"/>
+                            <Setter Property="Effect" Value="{StaticResource ElevationLow}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Background" Value="{StaticResource ButtonDisabledBrush}"/>
+                            <Setter Property="Foreground" Value="{StaticResource LightTextDisabledBrush}"/>
+                            <Setter Property="Effect" Value="{x:Null}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- =================================== -->
+    <!-- PROFESSIONAL CARD STYLES -->
+    <!-- =================================== -->
+    
+    <Style x:Key="HiveHelixCardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource LightSurfacePrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource LightSurfaceSecondaryBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusLarge}"/>
+        <Setter Property="Padding" Value="{StaticResource ThicknessLarge}"/>
+        <Setter Property="Margin" Value="{StaticResource ThicknessMedium}"/>
+        <Setter Property="Effect" Value="{StaticResource ElevationMedium}"/>
+    </Style>
+    
+    <Style x:Key="HiveHelixElevatedCardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource LightSurfacePrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource LightSurfaceSecondaryBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusLarge}"/>
+        <Setter Property="Padding" Value="{StaticResource ThicknessLarge}"/>
+        <Setter Property="Margin" Value="{StaticResource ThicknessMedium}"/>
+        <Setter Property="Effect" Value="{StaticResource ElevationHigh}"/>
+    </Style>
+
+    <!-- =================================== -->
+    <!-- PROFESSIONAL INPUT STYLES -->
+    <!-- =================================== -->
+    
+    <Style x:Key="HiveHelixTextBoxStyle" TargetType="TextBox">
+        <Setter Property="Background" Value="{StaticResource LightSurfacePrimaryBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource LightTextPrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource HiveHelixSecondaryBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="{StaticResource ThicknessMedium}"/>
+        <Setter Property="Margin" Value="{StaticResource ThicknessSmall}"/>
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{StaticResource CornerRadiusSmall}">
+                        <ScrollViewer x:Name="PART_ContentHost"
+                                    Margin="{TemplateBinding Padding}"
+                                    VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter Property="BorderBrush" Value="{StaticResource HiveHelixPrimaryBrush}"/>
+                            <Setter Property="BorderThickness" Value="2"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Background" Value="{StaticResource LightBackgroundSecondaryBrush}"/>
+                            <Setter Property="Foreground" Value="{StaticResource LightTextDisabledBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <Style x:Key="HiveHelixComboBoxStyle" TargetType="ComboBox">
+        <Setter Property="Background" Value="{StaticResource LightSurfacePrimaryBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource LightTextPrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource HiveHelixSecondaryBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="{StaticResource ThicknessMedium}"/>
+        <Setter Property="Margin" Value="{StaticResource ThicknessSmall}"/>
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="14"/>
+    </Style>
+
+    <!-- =================================== -->
+    <!-- PROFESSIONAL WINDOW STYLES -->
+    <!-- =================================== -->
+    
+    <Style x:Key="HiveHelixWindowStyle" TargetType="Window">
+        <Setter Property="Background" Value="{StaticResource LightBackgroundPrimaryBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource LightTextPrimaryBrush}"/>
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="UseLayoutRounding" Value="True"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+    </Style>
+
+    <!-- =================================== -->
+    <!-- PROFESSIONAL PANEL STYLES -->
+    <!-- =================================== -->
+    
+    <Style x:Key="HiveHelixPanelStyle" TargetType="Panel">
+        <Setter Property="Background" Value="{StaticResource LightBackgroundSecondaryBrush}"/>
+        <Setter Property="Margin" Value="{StaticResource ThicknessSmall}"/>
+    </Style>
+    
+    <Style x:Key="HiveHelixStackPanelStyle" TargetType="StackPanel">
+        <Setter Property="Background" Value="{StaticResource LightBackgroundSecondaryBrush}"/>
+        <Setter Property="Margin" Value="{StaticResource ThicknessSmall}"/>
+    </Style>
+    
+    <Style x:Key="HiveHelixGridStyle" TargetType="Grid">
+        <Setter Property="Background" Value="{StaticResource LightBackgroundSecondaryBrush}"/>
+        <Setter Property="Margin" Value="{StaticResource ThicknessSmall}"/>
+    </Style>
+
+    <!-- =================================== -->
+    <!-- PROFESSIONAL LIST STYLES -->
+    <!-- =================================== -->
+    
+    <Style x:Key="HiveHelixListBoxStyle" TargetType="ListBox">
+        <Setter Property="Background" Value="{StaticResource LightSurfacePrimaryBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource LightTextPrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource HiveHelixSecondaryBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="{StaticResource ThicknessSmall}"/>
+        <Setter Property="Margin" Value="{StaticResource ThicknessSmall}"/>
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="14"/>
+    </Style>
+    
+    <Style x:Key="HiveHelixListViewStyle" TargetType="ListView">
+        <Setter Property="Background" Value="{StaticResource LightSurfacePrimaryBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource LightTextPrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource HiveHelixSecondaryBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="{StaticResource ThicknessSmall}"/>
+        <Setter Property="Margin" Value="{StaticResource ThicknessSmall}"/>
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="14"/>
+    </Style>
+
+    <!-- =================================== -->
+    <!-- PROFESSIONAL MENU STYLES -->
+    <!-- =================================== -->
+    
+    <Style x:Key="HiveHelixMenuStyle" TargetType="Menu">
+        <Setter Property="Background" Value="{StaticResource LightSurfacePrimaryBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource LightTextPrimaryBrush}"/>
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="14"/>
+    </Style>
+    
+    <Style x:Key="HiveHelixMenuItemStyle" TargetType="MenuItem">
+        <Setter Property="Background" Value="{StaticResource LightSurfacePrimaryBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource LightTextPrimaryBrush}"/>
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Padding" Value="{StaticResource ThicknessMedium}"/>
+    </Style>
+
+    <!-- =================================== -->
+    <!-- PROFESSIONAL TOOLBAR STYLES -->
+    <!-- =================================== -->
+    
+    <Style x:Key="HiveHelixToolBarStyle" TargetType="ToolBar">
+        <Setter Property="Background" Value="{StaticResource LightSurfaceSecondaryBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource LightTextPrimaryBrush}"/>
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Padding" Value="{StaticResource ThicknessSmall}"/>
+    </Style>
+
+    <!-- =================================== -->
+    <!-- PROFESSIONAL STATUS BAR STYLES -->
+    <!-- =================================== -->
+    
+    <Style x:Key="HiveHelixStatusBarStyle" TargetType="StatusBar">
+        <Setter Property="Background" Value="{StaticResource LightSurfaceSecondaryBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource LightTextSecondaryBrush}"/>
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Padding" Value="{StaticResource ThicknessSmall}"/>
+    </Style>
+
+    <!-- =================================== -->
+    <!-- PROFESSIONAL TAB STYLES -->
+    <!-- =================================== -->
+    
+    <Style x:Key="HiveHelixTabControlStyle" TargetType="TabControl">
+        <Setter Property="Background" Value="{StaticResource LightBackgroundPrimaryBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource LightTextPrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource HiveHelixSecondaryBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="14"/>
+    </Style>
+    
+    <Style x:Key="HiveHelixTabItemStyle" TargetType="TabItem">
+        <Setter Property="Background" Value="{StaticResource LightSurfaceSecondaryBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource LightTextPrimaryBrush}"/>
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Padding" Value="{StaticResource ThicknessMedium}"/>
+        <Setter Property="Margin" Value="0,0,2,0"/>
+    </Style>
+
+    <!-- =================================== -->
+    <!-- PROFESSIONAL PROGRESS STYLES -->
+    <!-- =================================== -->
+    
+    <Style x:Key="HiveHelixProgressBarStyle" TargetType="ProgressBar">
+        <Setter Property="Background" Value="{StaticResource LightSurfaceSecondaryBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource HiveHelixPrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource HiveHelixSecondaryBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Height" Value="8"/>
+        <Setter Property="Margin" Value="{StaticResource ThicknessSmall}"/>
+    </Style>
+
+    <!-- =================================== -->
+    <!-- PROFESSIONAL SLIDER STYLES -->
+    <!-- =================================== -->
+    
+    <Style x:Key="HiveHelixSliderStyle" TargetType="Slider">
+        <Setter Property="Background" Value="{StaticResource LightSurfaceSecondaryBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource HiveHelixPrimaryBrush}"/>
+        <Setter Property="Margin" Value="{StaticResource ThicknessSmall}"/>
+    </Style>
+
+</ResourceDictionary> 

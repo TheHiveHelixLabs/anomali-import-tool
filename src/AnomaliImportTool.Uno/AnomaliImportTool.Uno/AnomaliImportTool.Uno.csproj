@@ -1,0 +1,63 @@
+<Project Sdk="Uno.Sdk">
+  <PropertyGroup>
+    <!-- Focus on desktop platforms for cross-platform development -->
+    <TargetFrameworks>net8.0-desktop;net8.0-browserwasm</TargetFrameworks>
+
+    <OutputType>Exe</OutputType>
+    <UnoSingleProject>true</UnoSingleProject>
+
+    <!-- Corporate branding matching original project -->
+    <ApplicationTitle>Anomali Threat Bulletin Import Tool</ApplicationTitle>
+    <ApplicationId>com.hivehelixlabs.anomaliimporttool</ApplicationId>
+    <ApplicationDisplayVersion>0.1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationPublisher>Hive Helix Labs</ApplicationPublisher>
+    <Description>Professional security document import tool with Living Workspace interface - Cross Platform Edition</Description>
+
+    <!-- Corporate metadata -->
+    <Authors>Hive Helix Labs</Authors>
+    <Company>Hive Helix Labs</Company>
+    <Copyright>Copyright © Hive Helix Labs 2025</Copyright>
+    <Product>Anomali Threat Bulletin Import Tool</Product>
+
+    <!--
+      UnoFeatures for professional UI capabilities
+      https://aka.platform.uno/singleproject-features
+    -->
+    <UnoFeatures>
+      SkiaRenderer;
+      Hosting;
+      Logging;
+    </UnoFeatures>
+  </PropertyGroup>
+
+  <!-- Additional dependencies for enterprise features -->
+  <ItemGroup>
+    <!-- ReactiveUI for MVVM (compatible with existing ViewModels) -->
+    <PackageReference Include="ReactiveUI" />
+    
+    <!-- Microsoft Extensions for DI and Configuration -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    
+    <!-- Logging -->
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Extensions.Hosting" />
+    <PackageReference Include="Serilog.Sinks.File" />
+    <PackageReference Include="Serilog.Sinks.Console" />
+    
+    <!-- JSON processing -->
+    <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
+
+  <!-- Project References - Core only for now -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\AnomaliImportTool.Core\AnomaliImportTool.Core.csproj" />
+    <!-- Infrastructure temporarily excluded due to compilation errors -->
+    <!-- <ProjectReference Include="..\..\AnomaliImportTool.Infrastructure\AnomaliImportTool.Infrastructure.csproj" /> -->
+  </ItemGroup>
+
+</Project>

@@ -1,31 +1,36 @@
-using Microsoft.Extensions.DependencyInjection;
-using AnomaliImportTool.Core.Application.DependencyInjection;
-using AnomaliImportTool.Core.Application.Interfaces.Infrastructure;
+using Microsoft.Extensions.Logging;
 
 namespace AnomaliImportTool.Infrastructure.Services;
 
 /// <summary>
-/// Sample infrastructure service demonstrating automatic registration
+/// Sample infrastructure service (STUB IMPLEMENTATION).
+/// This is a temporary stub to resolve compilation issues.
 /// </summary>
-[ServiceRegistration(typeof(ISampleInfrastructureService), ServiceLifetime.Scoped)]
-public class SampleInfrastructureService : ISampleInfrastructureService
+public class SampleInfrastructureService
 {
-    public string GetServiceInfo()
+    private readonly ILogger<SampleInfrastructureService> _logger;
+
+    public SampleInfrastructureService(ILogger<SampleInfrastructureService> logger)
     {
-        return "Sample Infrastructure Service - Automatically Registered";
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public Task<bool> ValidateServiceAsync()
+    /// <summary>
+    /// Sample method for infrastructure service (stub implementation)
+    /// </summary>
+    public async Task<string> ProcessSampleDataAsync(string data, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(true);
+        _logger.LogInformation("Processing sample data in stub implementation");
+        await Task.Delay(100, cancellationToken);
+        return $"Processed: {data}";
     }
-}
 
-/// <summary>
-/// Interface for sample infrastructure service
-/// </summary>
-public interface ISampleInfrastructureService
-{
-    string GetServiceInfo();
-    Task<bool> ValidateServiceAsync();
+    /// <summary>
+    /// Sample validation method (stub implementation)
+    /// </summary>
+    public bool ValidateData(string data)
+    {
+        _logger.LogDebug("Validating data in stub implementation");
+        return !string.IsNullOrWhiteSpace(data);
+    }
 } 
