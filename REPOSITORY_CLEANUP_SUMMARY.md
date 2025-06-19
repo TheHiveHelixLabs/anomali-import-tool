@@ -23,10 +23,10 @@ This document summarizes the comprehensive repository cleanup and restructuring 
 - **Added cross-platform OS file exclusions** (Windows, macOS, Linux)
 - **Clear documentation** of what should and shouldn't be tracked
 
-### 2. IDE-Specific File Removal
-- **Removed `.cursor/` directory** from git tracking
+### 2. IDE-Specific File Management
+- **Excluded `.cursor/` directory** from git tracking (files remain in filesystem for Cursor functionality)
 - **Removed TestResults** directory from git tracking
-- **Preserved generic rules** that are project-agnostic in memory per user preference
+- **Preserved essential Cursor rules** that are required for IDE functionality in filesystem
 - **Cleaned up development artifacts** that shouldn't be in version control
 
 ### 3. Branch Structure Reorganization
@@ -86,7 +86,7 @@ The develop branch contains **ALL**:
 Per user memory:
 > "The .cursor/rules directory contains three generic rule files (create-prd.mdc, generate-tasks.mdc, process-task-list.mdc) that are project-agnostic and work correctly for any project. These rules do not contain hard-coded project references and use dynamic placeholders like [feature-name] for file naming."
 
-**Action Taken**: These rules were removed from git tracking but preserved in local IDE configuration, maintaining the project-agnostic functionality while keeping them out of version control.
+**Action Taken**: These rules were excluded from git tracking but PRESERVED in the filesystem for Cursor IDE functionality, maintaining the project-agnostic functionality while keeping them out of version control. The `.cursor/` directory and its contents remain in the project folder but are ignored by git via `.gitignore`.
 
 ## Branch Usage Guidelines
 
