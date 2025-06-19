@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using AnomaliImportTool.Core.Models;
 
 namespace AnomaliImportTool.Core.Services
 {
@@ -349,15 +350,7 @@ namespace AnomaliImportTool.Core.Services
         public Dictionary<string, string> CustomFields { get; set; }
     }
 
-    /// <summary>
-    /// Template validation result
-    /// </summary>
-    public class TemplateValidationResult
-    {
-        public bool IsValid { get; set; }
-        public List<string> Errors { get; set; } = new List<string>();
-        public List<string> UsedPlaceholders { get; set; } = new List<string>();
-    }
+
 
     /// <summary>
     /// Predefined template definition

@@ -2,6 +2,7 @@ using System;
 using AnomaliImportTool.Core.Interfaces;
 using AnomaliImportTool.Core.Services;
 using AnomaliImportTool.Infrastructure.ApiClient;
+using AnomaliImportTool.Infrastructure.Database;
 using AnomaliImportTool.Infrastructure.DocumentProcessing;
 using AnomaliImportTool.Infrastructure.FileProcessing;
 using AnomaliImportTool.Infrastructure.Security;
@@ -66,6 +67,11 @@ namespace AnomaliImportTool.Infrastructure.DependencyInjection
             services.AddTransient<FileGroupingService>();
             services.AddTransient<NamingTemplateService>();
             services.AddTransient<MetadataExtractionService>();
+            
+            // Register template services
+            services.AddSingleton<TemplateDatabaseService>();
+            services.AddTransient<TemplateSerializationService>();
+            services.AddScoped<IImportTemplateService, ImportTemplateService>();
             
             // Register file processing services
             services.AddTransient<FileSecurityValidator>();

@@ -237,6 +237,11 @@ __pycache__/
 # PROJECT-SPECIFIC FILES
 # ================================
 
+# Project Administration and Internal Files
+project-admin/
+internal/
+admin/
+
 # Application Configuration (sensitive)
 appsettings.local.json
 appsettings.Development.json
