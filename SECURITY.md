@@ -19,7 +19,7 @@ We take the security of the Anomali Threat Bulletin Import Tool seriously. If yo
 
 Instead, report security issues privately using one of these methods:
 
-1. **Email**: Send details to [security@yourdomain.com]
+1. **Email**: Send details to [dev@thehivehl.cc]
 2. **GitHub Security Advisory**: Use the [Security Advisory](../../security/advisories/new) feature
 3. **Encrypted Communication**: Use our PGP key for sensitive reports
 
@@ -212,13 +212,13 @@ We believe in recognizing security researchers who help improve our security:
 ## Contact Information
 
 ### Security Team
-- **Email**: security@yourdomain.com
+- **Email**: dev@thehivehl.cc
 - **PGP Key**: [Download PGP Key](security-pgp-key.asc)
 - **Response Time**: 48 hours maximum
 
 ### Emergency Contact
-- **Critical Issues**: security-emergency@yourdomain.com
-- **Phone**: +1-XXX-XXX-XXXX (24/7 security hotline)
+- **Critical Issues**: dev@thehivehl.cc
+- **Phone**: Available upon request (emergency security hotline)
 
 ---
 
