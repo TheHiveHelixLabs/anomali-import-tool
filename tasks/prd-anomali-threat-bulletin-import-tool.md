@@ -2,18 +2,19 @@
 
 ## Introduction/Overview
 
-The Anomali Threat Bulletin Import Tool is a fully portable, standalone Windows application designed to run from any location including USB drives, network shares, or local directories without installation. The tool streamlines the process of importing threat intelligence documents into Anomali ThreatStream by providing automated extraction, intelligent grouping, and bulk import capabilities with customizable naming schemes and attachment handling. The application is completely self-contained with zero dependencies on system installations or registry entries.
+The Anomali Threat Bulletin Import Tool is a fully portable, standalone cross-platform application that requires **NO INSTALLATION** - simply unzip the provided archive and run the executable directly. The application is designed to run from any location including USB drives, network shares, or local directories without requiring administrative privileges, system modifications, or runtime installations. Built using Uno Platform, the tool provides native performance across Windows, macOS, Linux, and Web platforms while streamlining the process of importing threat intelligence documents into Anomali ThreatStream. The application offers automated extraction with customizable import templates, intelligent grouping, and bulk import capabilities with flexible naming schemes and attachment handling. The application is completely self-contained with zero dependencies on system installations, registry entries, or platform-specific runtimes.
 
 ## Goals
 
 1. **Automate Document Import**: Reduce manual effort by 90% when importing threat bulletins from document repositories
 2. **Intelligent Grouping**: Automatically group related documents into single threat bulletins based on configurable rules
-3. **Data Extraction**: Extract key metadata (dates, usernames, ticket numbers) from documents for automated naming
-4. **Flexible Integration**: Support multiple Anomali API versions and instances
-5. **Audit Compliance**: Maintain NIST-compliant security practices and comprehensive audit trails
-6. **Error Resilience**: Provide fallback options for failed imports and clear user feedback
-7. **Version Control Integration**: Automatically commit and push completed tasks to Git repositories for seamless development workflow
-8. **Complete Portability**: Run from any location (USB drives, network shares, local directories) without installation or system dependencies
+3. **Data Extraction**: Extract key metadata (dates, usernames, ticket numbers) from documents using customizable import templates for automated naming
+4. **Template-Driven Processing**: Enable users to create and manage custom import templates for different document types and organizational requirements
+5. **Flexible Integration**: Support multiple Anomali API versions and instances
+6. **Audit Compliance**: Maintain NIST-compliant security practices and comprehensive audit trails
+7. **Error Resilience**: Provide fallback options for failed imports and clear user feedback
+8. **Version Control Integration**: Automatically commit and push completed tasks to Git repositories for seamless development workflow
+9. **Complete Portability**: Run from any location (USB drives, network shares, local directories) with **NO INSTALLATION REQUIRED** - simply unzip and execute
 
 ## User Stories
 
@@ -21,13 +22,20 @@ The Anomali Threat Bulletin Import Tool is a fully portable, standalone Windows 
 2. **As a security analyst**, I want to group related files (e.g., "Admin Exception.pdf" and "Admin Exception Signed.pdf") into a single bulletin so that all relevant documentation is consolidated
 3. **As a security analyst**, I want to extract usernames from documents and create separate bulletins for each user so that threats are properly attributed
 4. **As a security administrator**, I want to configure custom naming templates so that bulletins follow our organization's naming conventions
-5. **As a security analyst**, I want to preview and confirm imports before submission so that I can verify data accuracy
-6. **As a compliance officer**, I want comprehensive audit trails of all import activities so that we maintain proper documentation
-7. **As a developer**, I want the system to automatically commit and push my completed work to Git so that version control is maintained without manual intervention
-8. **As a project manager**, I want automatic Git integration to track task completion and maintain code history for project oversight
-9. **As a security analyst**, I want to run the application directly from a USB drive on any Windows machine without requiring installation or administrative privileges
-10. **As an IT administrator**, I want to deploy the application to network shares so users can run it directly without local installation or system modifications
-11. **As a field analyst**, I want to carry the application on portable media and use it on different systems without leaving traces or requiring system changes
+5. **As a security administrator**, I want to create custom import templates that define exactly where to extract usernames, ticket numbers, and other metadata from different document types so that data extraction is consistent and accurate across our organization
+6. **As a security analyst**, I want to preview and confirm imports before submission so that I can verify data accuracy
+7. **As a compliance officer**, I want comprehensive audit trails of all import activities so that we maintain proper documentation
+8. **As a developer**, I want the system to automatically commit and push my completed work to Git so that version control is maintained without manual intervention
+9. **As a project manager**, I want automatic Git integration to track task completion and maintain code history for project oversight
+10. **As a security analyst**, I want to run the application directly from a USB drive on any Windows, macOS, or Linux machine with **NO INSTALLATION** required - just unzip and run the executable
+11. **As an IT administrator**, I want to deploy the application to network shares so users can run it directly on any platform without local installation, administrative privileges, or system modifications
+12. **As a field analyst**, I want to carry the application on portable media and use it on different operating systems without leaving traces, requiring system changes, or needing installation procedures
+13. **As a new user**, I want an interactive tutorial that guides me through the interface so I can become productive quickly without reading documentation
+14. **As a visual learner**, I want to see document relationships through Visio-style connections so I can understand how files are grouped together
+15. **As a power user**, I want to switch between Simple and Advanced modes mid-workflow so I can use the appropriate interface for my current task
+16. **As a security analyst with accessibility needs**, I want full keyboard navigation and voice control support so I can use the application effectively regardless of my physical capabilities
+17. **As a frequent user**, I want the interface to feel responsive and alive with smooth animations so my daily workflow feels engaging rather than mechanical
+18. **As a user processing large batches**, I want to see real-time progress with file-by-file details so I understand exactly what the system is doing and how long it will take
 
 ## Functional Requirements
 
@@ -53,19 +61,59 @@ The Anomali Threat Bulletin Import Tool is a fully portable, standalone Windows 
    - Other user-defined fields
 9. **FR-9**: The system must handle documents containing multiple usernames by creating duplicate bulletins
 10. **FR-10**: The system must prompt users for missing required fields
-11. **FR-11**: The system must support OCR capabilities for scanned PDF documents using Windows OCR or Tesseract
+11. **FR-11**: The system must support OCR capabilities for scanned PDF documents using cross-platform OCR solutions (Tesseract for all platforms, Windows OCR on Windows)
 12. **FR-12**: The system must allow configuration of custom field extraction patterns using regex or keyword matching
+12. **FR-12A**: The system must seamlessly integrate import templates with the data extraction workflow, automatically applying the best-matching template during file processing and allowing manual template override when needed
+
+### Import Template System
+13. **FR-13**: The system must provide a comprehensive import template creation interface allowing users to:
+    - Create templates for different document types (PDF, Word, Excel)
+    - Define extraction zones using visual selection tools (coordinate-based regions)
+    - Configure text-based extraction patterns using regex, keyword matching, and context clues
+    - Set field-specific validation rules and data transformation logic
+14. **FR-14**: The system must support template-based field extraction for common metadata including:
+    - Username/Author extraction with multiple pattern matching options
+    - ServiceNow ticket number recognition with customizable formats
+    - Date extraction with configurable date format recognition
+    - Approval status and workflow state identification
+    - Risk level and security classification extraction
+    - Custom organizational fields with user-defined patterns
+15. **FR-15**: The system must provide import template management capabilities:
+    - Save and organize templates with descriptive names and categories
+    - Export/import templates for sharing across systems and users
+    - Version control for template modifications with rollback capabilities
+    - Template inheritance for similar document types with customizable overrides
+16. **FR-16**: The system must implement intelligent template matching:
+    - Automatic template suggestion based on document characteristics
+    - Confidence scoring for template-document compatibility
+    - Multi-template application with conflict resolution
+    - Fallback to manual template selection when automatic matching fails
+17. **FR-17**: The system must provide template testing and validation features:
+    - Live preview of extraction results during template creation
+    - Test template against sample documents with result validation
+    - Extraction confidence indicators showing field reliability
+    - Template performance metrics and accuracy reporting
+18. **FR-18**: The system must support advanced template configuration options:
+    - Conditional extraction logic based on document content
+    - Multi-page document handling with page-specific extraction rules
+    - Table and structured data extraction for Excel and complex PDF documents
+    - OCR integration settings per template for scanned document processing
+19. **FR-19**: The system must provide template import/export functionality:
+    - JSON-based template format for portability and version control
+    - Template sharing between different application instances
+    - Bulk template operations (import/export multiple templates)
+    - Template backup and restore capabilities
 
 ### Naming Templates
-13. **FR-13**: The system must support customizable naming templates using placeholders like:
+20. **FR-20**: The system must support customizable naming templates using placeholders like:
     - [ServiceNow ticket #]
     - [Date(format)]
     - [File name]
     - [Username]
-    - Custom fields
-14. **FR-14**: The system must allow saving and managing multiple naming templates
-15. **FR-15**: The system must support conditional logic in templates
-16. **FR-16**: The system must provide preview of generated names before import
+    - Custom fields extracted via import templates
+21. **FR-21**: The system must allow saving and managing multiple naming templates
+22. **FR-22**: The system must support conditional logic in templates
+23. **FR-23**: The system must provide preview of generated names before import
 
 ### Anomali Integration
 17. **FR-17**: The system must support configurable Anomali ThreatStream API versions (v2/v3)
@@ -84,27 +132,99 @@ The Anomali Threat Bulletin Import Tool is a fully portable, standalone Windows 
 26. **FR-26**: The system must support ThreatStream tag management and assignment
 27. **FR-27**: The system must implement ThreatStream observable filtering and search capabilities
 
-### User Interface & Usability
-28. **FR-28**: The system must provide a clean, agile interface with:
-    - Drag-and-drop file/folder selection
-    - Preview of extracted content
-    - Progress tracking for batch operations
-    - Import history viewer
-29. **FR-29**: The system must display clear error messages with actionable feedback
-30. **FR-30**: The system must provide an import confirmation screen showing:
-    - Bulletin names
-    - Grouped files
-    - Extracted data
-    - Attachment list
-31. **FR-31**: The system must comply with WCAG 2.1 AA accessibility standards
-32. **FR-32**: The system must provide comprehensive keyboard navigation support
-33. **FR-33**: The system must support high contrast and dark mode themes
-34. **FR-34**: The system must include contextual help and tooltips throughout the interface
-35. **FR-35**: The system must provide an interactive onboarding wizard for new users
-36. **FR-36**: The system must support customizable UI layouts and preferences
-37. **FR-37**: The system must implement progressive disclosure to reduce cognitive load
-38. **FR-38**: The system must provide undo/redo functionality for critical operations
-39. **FR-39**: The system must include search and filter capabilities across all data views
+### User Interface & Usability - "Living Workspace Experience"
+28. **FR-28**: The system must provide a dual-mode interface architecture:
+    - **Simple Wizard Mode**: Step-by-step guided workflow for basic users with animated guidance
+    - **Advanced Mode**: Tab-based interface with sidebar navigation for power users
+    - **Mode Switching**: Users can switch between modes mid-workflow with preference persistence
+    - **Dashboard Entry**: Quick start section with action cards and status overview
+29. **FR-29**: The system must implement Hive Helix Labs corporate branding with professional Microsoft aesthetic:
+    - **Color System**: Corporate blue (#3B82F6) primary, purple (#8B5CF6) accents, red (#EF4444) errors, WCAG AA compliant medium grey (#6B7280) for secondary actions
+    - **Typography**: Platform-native system fonts (Segoe UI on Windows, San Francisco on macOS, system-ui on Linux) with professional hierarchy
+    - **Design Language**: Office/PowerBI-inspired with Fluent Design elements and subtle shadows
+30. **FR-30**: The system must provide an immersive file selection experience:
+    - **Animated Drop Zone**: Full-screen drop zone with breathing animation and guidance triggers
+    - **Smart Preview Panel**: Live file preview with metadata extraction confidence indicators  
+    - **Document Pop-out**: Click-to-zoom preview windows for detailed document inspection
+    - **Multi-format Support**: Visual file type indicators (PDF, Word, Excel) with thumbnails
+31. **FR-31**: The system must implement Visio-style intelligent grouping interface:
+    - **Card-based Layout**: Document cards with rounded corners, shadows, and file type icons
+    - **Visual Connections**: PowerBI-style line connectors with drag-and-drop relationship drawing
+    - **Snap-to-Connect**: Magnetic connection points with rubber-band line animation
+    - **Group Visualization**: Dynamic group formation with physics-based card arrangement
+32. **FR-32**: The system must provide "living workspace" animations and interactions:
+    - **Micro-interactions**: 150ms hover effects with blue glow and elevation (translateY(-1px))
+    - **Workflow Transitions**: 800ms morphing layout transformations between modes
+    - **Processing Animations**: File scanning effects, progress rings, and typewriter metadata population
+    - **Success Celebrations**: Subtle confetti bursts and checkmark draw-in animations (300ms)
+33. **FR-33**: The system must implement comprehensive error handling UX:
+    - **Dedicated Error Panel**: Inline error alerts with descriptive messages and suggested resolutions
+    - **Recovery Options**: One-click fixes for common issues with contextual help
+    - **Error Animation**: X-axis shake effect (3 cycles, 200ms) with red glow breathing
+34. **FR-34**: The system must provide professional feedback systems:
+    - **Status Bars**: Real-time progress with file-by-file processing details
+    - **Inline Messaging**: Contextual success/warning/info states with appropriate color coding
+    - **Time Estimation**: Accurate remaining time calculation for batch operations
+35. **FR-35**: The system must include interactive onboarding experience:
+    - **First-Run Tutorial**: Overlay-based guidance through basic setup and core features
+    - **Progressive Disclosure**: Feature introduction as needed during natural workflow
+    - **Setup Wizard**: Configuration walkthrough for API credentials and preferences
+36. **FR-36**: The system must support power user productivity features:
+    - **Keyboard Shortcuts**: Complete hotkey support for all major actions (Ctrl+N, Ctrl+G, etc.)
+    - **Bulk Operations**: Specialized UI modes for mass file processing
+    - **Customizable Layouts**: Workspace configuration persistence and multiple layout options
+37. **FR-37**: The system must comply with enhanced accessibility standards:
+    - **WCAG 2.1 AA**: Full compliance with professional audit verification
+    - **Voice Control**: Integration with platform-native speech recognition (Windows Speech Recognition, macOS Speech Recognition, Web Speech API)
+    - **High Contrast**: Enhanced contrast modes beyond standard Windows settings
+    - **Keyboard Navigation**: Complete keyboard-only operation capability
+38. **FR-38**: The system must implement responsive window management:
+    - **Minimum Window Size**: 1024x768 with responsive layout adaptation
+    - **Full-Screen Mode**: Dedicated mode for large batch operations
+    - **Multi-Monitor**: Ultra-wide and multi-monitor layout optimization
+39. **FR-39**: The system must provide comprehensive user assistance:
+    - **Contextual Help**: Smart tooltips and progressive help system
+    - **Interactive Guidance**: Context-aware assistance throughout workflows
+    - **Undo/Redo**: Full operation rollback capability for critical actions
+
+### Animation & Interaction System
+129. **FR-129**: The system must implement professional-grade animation framework:
+    - **Performance Target**: 60 FPS with GPU acceleration using transform/opacity
+    - **Timing Functions**: Cubic-bezier easing with Material Design timing
+    - **Staggered Animations**: 100ms intervals for bulk operations to prevent overwhelming
+    - **Reduced Motion**: Complete `prefers-reduced-motion` support for accessibility
+130. **FR-130**: The system must provide signature file processing animations:
+    - **Drop Recognition**: Border pulse (blue→purple→blue) with 1.05 scale transform
+    - **Validation Sequence**: Checkmark draw-in animation with color transition (grey→green)
+    - **Extraction Process**: Document scanning line sweep with progress ring (0%→100%)
+    - **Connection Drawing**: Bezier curve animation with magnetic snap effects
+131. **FR-131**: The system must implement state transition animations:
+    - **Mode Switching**: 800ms morphing layout with sidebar slide-in and area expansion
+    - **Wizard Steps**: slideOutLeft/slideInRight (300ms) with 100ms delay offset
+    - **Error Recovery**: Shake animation (3 cycles, 200ms) with breathing glow effect
+    - **Success States**: Confetti burst (1s) with checkmark path animation (300ms)
+132. **FR-132**: The system must provide audio feedback system:
+    - **Professional Sounds**: Material design sound palette with system volume respect
+    - **File Operations**: Soft "thunk" for drops, gentle chimes for success, muted alerts for errors
+    - **Disable Option**: Complete audio disable capability in settings
+    - **Typing Effects**: Subtle keyboard sounds during metadata extraction display
+
+### Advanced Grouping & Visualization
+133. **FR-133**: The system must implement PowerBI-style visual relationship system:
+    - **Connection Types**: Straight lines for direct relationships, curved for complex associations
+    - **Color Coding**: Blue for confirmed links, orange for suggested, red for conflicts
+    - **Animation Flow**: Electric pulse along connection lines for active relationships
+    - **Snap Points**: 8-point connection anchors on each document card
+134. **FR-134**: The system must provide intelligent card layout algorithms:
+    - **Physics Engine**: Realistic card movement with collision detection and smooth settling
+    - **Auto-Arrange**: Smart positioning to minimize connection line crossings
+    - **Zoom & Pan**: Infinite canvas with smooth zoom (0.25x to 4x) and pan navigation
+    - **Mini-Map**: Overview panel for navigation in large document sets
+135. **FR-135**: The system must support advanced selection and manipulation:
+    - **Multi-Select**: Lasso tool, shift-click, and rectangular selection with visual feedback
+    - **Bulk Actions**: Contextual toolbar for selected items with batch operation support
+    - **Copy/Paste**: Visual clipboard with drag-and-drop between different areas
+    - **Group Operations**: Create, merge, split, and dissolve groups with smooth animations
 
 ### Security & Settings
 40. **FR-40**: The system must securely store API keys using NIST-compliant encryption (AES-256) in portable configuration files
@@ -121,18 +241,18 @@ The Anomali Threat Bulletin Import Tool is a fully portable, standalone Windows 
 51. **FR-51**: The system must maintain security audit logs in portable log files
 52. **FR-52**: The system must support secure local credential storage using portable encryption methods
 
-### Portability & Deployment
-53. **FR-53**: The system must run without installation or administrative privileges on Windows systems
-54. **FR-54**: The system must store all configuration, logs, and data files relative to the application directory
-55. **FR-55**: The system must not write to Windows registry or system directories
-56. **FR-56**: The system must not require .NET Framework installation (self-contained deployment)
+### Portability & Deployment - "NO INSTALLATION REQUIRED"
+53. **FR-53**: The system must run with **ZERO INSTALLATION** requirements - simply unzip the provided archive and execute the binary directly on Windows, macOS, and Linux systems without administrative privileges
+54. **FR-54**: The system must store all configuration, logs, and data files relative to the application directory to maintain complete portability
+55. **FR-55**: The system must not write to system registries or system-specific directories (Windows Registry, macOS preferences, Linux system configs) ensuring no system footprint
+56. **FR-56**: The system must not require platform-specific runtime installation (fully self-contained deployment with embedded .NET runtime and all dependencies)
 57. **FR-57**: The system must support running from read-only media with configuration override options
-58. **FR-58**: The system must detect and handle portable vs. installed deployment scenarios
+58. **FR-58**: The system must detect and handle portable vs. installed deployment scenarios across all platforms
 59. **FR-59**: The system must provide portable backup and restore functionality for configurations
 60. **FR-60**: The system must support multiple concurrent instances from different locations
-61. **FR-61**: The system must include all required dependencies in the application package
-62. **FR-62**: The system must support running from UNC paths and network shares
-63. **FR-63**: The system must handle path length limitations and special characters in portable paths
+61. **FR-61**: The system must include all required dependencies in the application package for each platform
+62. **FR-62**: The system must support running from UNC paths, network shares, and cross-platform network locations
+63. **FR-63**: The system must handle path length limitations and special characters in portable paths across different file systems
 
 ### Error Handling & Fallback
 64. **FR-64**: The system must handle import failures gracefully with options to:
@@ -227,47 +347,88 @@ The Anomali Threat Bulletin Import Tool is a fully portable, standalone Windows 
 2. **Document editing**: The tool will not modify source documents
 3. **Real-time threat feed integration**: Focus is on document import only
 4. **Multi-language support**: Initial version will be English only
-5. **MacOS/Linux versions**: Windows-only for initial release
-6. **Enterprise deployment features**: No Group Policy, SCCM, or MSI installer support (portable deployment only)
-7. **Multi-user/multi-tenant support**: Single-user application only
-8. **System integration**: No Windows registry modifications, system service installation, or global system changes
+5. **Enterprise deployment features**: No Group Policy, SCCM, or MSI installer support (portable deployment only)
+6. **Multi-user/multi-tenant support**: Single-user application only
+7. **System integration**: No system registry/preferences modifications, system service installation, or global system changes on any platform
 8. **Advanced compliance certifications**: No FedRAMP, SOC 2, or formal security certifications
 9. **Built-in training/learning management**: No integrated training materials or LMS integration
 10. **Business intelligence/reporting dashboards**: Basic reporting only, no advanced BI features
+11. **Advanced AI/ML document analysis**: Import templates use pattern matching and regex, not advanced machine learning for content understanding
+12. **Document format conversion**: Templates extract data from existing formats but do not convert between document types
 
 ## Design Considerations
 
-### User Interface
-- Modern, clean design following Windows 11 design guidelines
-- Dark/light theme support
-- Responsive layout adapting to window size
-- Clear visual feedback for all operations
-- Accessible design following WCAG guidelines
+### Visual Design Language - "Professional Living Workspace"
+- **Corporate Identity**: Hive Helix Labs branding with black, purple, blue, and red color scheme
+- **Microsoft Ecosystem**: Office/PowerBI/Word aesthetic with Fluent Design elements
+- **Professional Polish**: Rounded corners (8px), subtle shadows (0 2px 8px rgba(0,0,0,0.1)), platform-native system fonts
+- **Accessibility First**: WCAG 2.1 AA compliance with enhanced high contrast and voice control support
+- **Responsive Design**: 1024x768 minimum, full-screen mode, multi-monitor optimization
 
-### Workflow
-1. Configuration setup (API credentials, profiles)
-2. File/folder selection
-3. Automatic grouping with manual adjustment option
-4. Data extraction and preview
-5. Naming template application
-6. Import confirmation
-7. Processing with progress indication
-8. Results summary with error handling
+### User Experience Architecture
+- **Dual-Mode Design**: Simple Wizard for guided workflows, Advanced Mode for power users
+- **Mode Switching**: Mid-workflow transitions with 800ms morphing animations
+- **Progressive Disclosure**: Feature introduction as needed, reducing cognitive load
+- **Contextual Intelligence**: Smart assistance, tooltips, and recovery suggestions
+
+### Animation & Interaction Philosophy
+- **"Living Workspace" Concept**: Breathing animations, reactive micro-interactions, physics-based movements
+- **Performance Excellence**: 60 FPS target, GPU acceleration, staggered timing for bulk operations
+- **Professional Restraint**: Subtle effects that enhance rather than distract from productivity
+- **Accessibility Consideration**: Complete `prefers-reduced-motion` support with alternative feedback
+
+### Workflow Experience Design
+
+#### Simple Wizard Mode (7 Steps):
+1. **Dashboard Entry**: Quick start cards, mode selection, status overview with animated guidance
+2. **File Selection**: Immersive drop zone with breathing animation, smart preview panel, document pop-outs
+3. **Import Template Selection**: Smart template matching with confidence indicators, custom template creation, visual template editor
+4. **Intelligent Grouping**: Visio-style cards with PowerBI-style connections, drag-and-drop relationship drawing
+5. **Data Extraction**: Template-guided scanning animations, confidence meters, typewriter effect for field population
+6. **Naming Template Application**: Live preview, conditional logic, naming template management using extracted data
+7. **Import Confirmation**: Final review, processing with real-time feedback, celebration animations
+
+#### Advanced Mode Experience:
+- **Mission Control Layout**: Sidebar navigation, tabbed workspace, contextual property panels
+- **Multi-Session Support**: Handle multiple imports simultaneously with workspace persistence
+- **Power User Tools**: Keyboard shortcuts, bulk operations, customizable layouts, macro recording
+- **Visual Canvas**: Infinite zoom/pan workspace with mini-map navigation for large document sets
+
+### Accessibility & Inclusive Design
+- **Multi-Modal Interaction**: Mouse, keyboard, voice, and touch support where available
+- **Visual Accessibility**: High contrast modes, font scaling, color-blind friendly palette
+- **Cognitive Accessibility**: Clear navigation, consistent patterns, contextual help
+- **Motor Accessibility**: Large click targets, customizable timing, reduced precision requirements
+
+### Error Handling & Recovery UX
+- **Graceful Degradation**: System continues operation with clear status communication
+- **Contextual Recovery**: Inline error panels with specific remediation steps
+- **Visual Feedback**: Professional error animations (shake, glow) without startling users
+- **One-Click Fixes**: Automated recovery options for common issues
+
+### Performance & Responsiveness
+- **Perceived Performance**: Skeleton screens, progress indicators, optimistic UI updates
+- **Real Performance**: Asynchronous operations, background processing, memory efficiency
+- **Feedback Loops**: Real-time status, time estimation, completion celebrations
+- **Scalability**: Handles 100+ files with responsive UI and clear progress communication
 
 ## Technical Considerations
 
 ### Architecture
-- **Framework**: .NET 6+ with WPF or WinUI 3 for modern Windows application
+- **UI Framework**: .NET 6+ with Uno Platform for cross-platform application development (Windows, macOS, Linux, WebAssembly)
+- **Animation Engine**: Uno Platform's animation system with Lottie support for cross-platform GPU-accelerated graphics and smooth 60 FPS animations
 - **Document Processing**: 
-  - PDF: PDFSharp or iTextSharp
-  - Word: OpenXML SDK
-  - Excel: OpenXML SDK or EPPlus
-  - OCR: Windows.Media.Ocr API or Tesseract.NET for scanned documents
-- **Security**: Windows Data Protection API (DPAPI) for credential storage
-- **Logging**: Serilog with file and database sinks
-- **Database**: SQLite for local storage of settings and history
-- **Network**: HttpClient with Polly for retry policies and resilience
-- **Git Integration**: LibGit2Sharp for Git operations with SSH/HTTPS authentication and platform API integration
+  - PDF: PDFSharp or iTextSharp with cross-platform OCR integration
+  - Word: OpenXML SDK with metadata extraction capabilities
+  - Excel: OpenXML SDK or EPPlus with cell-level content analysis
+  - OCR: Cross-platform Tesseract.NET primary, platform-specific OCR APIs where available (Windows.Media.Ocr, etc.)
+- **UI Architecture**: MVVM pattern with ReactiveUI for responsive data binding and command handling
+- **Animation Framework**: Custom animation system built on Uno Platform with Material Design timing functions
+- **Security**: Cross-platform AES-256 encryption for credential storage with platform-specific secure storage fallback (DPAPI on Windows, Keychain on macOS, etc.)
+- **Logging**: Serilog with structured logging, file sinks, and correlation ID tracking
+- **Database**: SQLite for settings, history, and workspace persistence with encryption at rest
+- **Network**: HttpClient with Polly for retry policies, circuit breakers, and API resilience
+- **Git Integration**: LibGit2Sharp for Git operations with SSH/HTTPS authentication and GitHub API integration
 
 ### API Integration
 - **Anomali ThreatStream API Support**: 
@@ -336,6 +497,13 @@ The Anomali Threat Bulletin Import Tool is a fully portable, standalone Windows 
   - Performance metrics collection
   - Business metrics monitoring
 
+### Import Template System Architecture
+- **Template Engine**: JSON-based template format with visual editor for coordinate-based extraction zones
+- **Pattern Matching**: Advanced regex engine with context-aware field recognition
+- **Template Storage**: Portable SQLite database for template persistence and version control
+- **Auto-Matching**: Machine learning-based template suggestion using document fingerprinting
+- **Template Inheritance**: Parent-child template relationships for organizational consistency
+
 ### Data Extraction Patterns
 Common fields for exception documents:
 - **Approval Details**: Approver name, approval date, expiration date
@@ -350,14 +518,14 @@ Common fields for exception documents:
 - Progress reporting at file and batch levels
 - Memory-efficient streaming for large files
 
-### Deployment
-- Single executable with embedded dependencies for direct download distribution
-- Fully portable application design (no installation required, runs from any location)
-- GitHub releases with compiled binaries and source code bundles
-- Self-contained deployment with all dependencies included (.NET runtime embedded)
-- Support for USB drives, network shares, and removable media
-- Zero registry footprint and no system modifications
-- Portable configuration and data storage relative to application directory
+### Deployment - "ZERO INSTALLATION ARCHITECTURE"
+- **NO INSTALLER APPROACH**: Cross-platform single executables with embedded dependencies - simply **unzip and run** on any supported platform
+- **Complete Portability**: Fully portable application design requiring no installation, administrative privileges, or system modifications
+- **Multi-Platform Distribution**: GitHub releases with compiled binaries (Windows .exe, macOS .app, Linux binaries, WebAssembly) and source code bundles
+- **Self-Contained Packages**: All dependencies included with embedded .NET runtime for each platform - no external runtime requirements
+- **Universal Media Support**: Support for USB drives, network shares, and removable media across all operating systems
+- **Zero System Footprint**: No system registry/preferences modifications and no system changes on any platform
+- **Relative Path Architecture**: Portable configuration and data storage relative to the application directory using cross-platform file system APIs
 
 ### Documentation & Knowledge Management
 - **Comprehensive API Documentation**: OpenAPI 3.0 specification with interactive examples
@@ -382,6 +550,136 @@ Common fields for exception documents:
   - Audit trail specifications
   - Regulatory compliance mappings
 
+## UI/UX Technical Specifications
+
+### Color System - "Hive Helix Labs Professional Palette"
+```css
+/* Primary Colors */
+--corporate-blue: #3B82F6;      /* Primary actions, buttons, active states */
+--corporate-purple: #8B5CF6;     /* Accents, highlights, secondary branding */
+--corporate-red: #EF4444;        /* Errors, danger states, warnings */
+--corporate-black: #111827;      /* Dark theme backgrounds, headers */
+
+/* Functional Colors */
+--success-indigo: #6366F1;       /* Success states, confirmations */
+--warning-amber: #F59E0B;        /* Warnings, caution states */
+--info-cyan: #06B6D4;           /* Information, tips, neutral actions */
+--secondary-grey: #6B7280;       /* Secondary actions, disabled states */
+--background-light: #F3F4F6;     /* Light theme backgrounds, cards */
+--background-dark: #1F2937;      /* Dark theme panels, sidebars */
+
+/* Accessibility Ratios (WCAG AA Compliant) */
+/* All color combinations tested for 4.5:1 minimum contrast */
+```
+
+### Typography System - "Professional Hierarchy"
+```css
+/* Font Family - Cross-Platform System Fonts */
+font-family: system-ui, -apple-system, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+
+/* Scale (Perfect Fourth - 1.333 ratio) */
+--font-size-xs: 0.75rem;     /* 12px - Captions, metadata */
+--font-size-sm: 0.875rem;    /* 14px - Labels, secondary text */
+--font-size-base: 1rem;      /* 16px - Body text, primary content */
+--font-size-lg: 1.125rem;    /* 18px - Subheadings, emphasis */
+--font-size-xl: 1.5rem;      /* 24px - Section headers */
+--font-size-2xl: 2rem;       /* 32px - Page titles, main headers */
+
+/* Weights */
+--font-weight-normal: 400;    /* Regular text */
+--font-weight-medium: 500;    /* Emphasis, buttons */
+--font-weight-semibold: 600;  /* Headings, important labels */
+--font-weight-bold: 700;      /* Major headings, alerts */
+```
+
+### Layout System - "Professional Spacing"
+```css
+/* Spacing Scale (8px base unit) */
+--space-1: 0.25rem;  /* 4px - Fine adjustments */
+--space-2: 0.5rem;   /* 8px - Small gaps, icon spacing */
+--space-3: 0.75rem;  /* 12px - Medium gaps */
+--space-4: 1rem;     /* 16px - Standard spacing */
+--space-6: 1.5rem;   /* 24px - Section spacing */
+--space-8: 2rem;     /* 32px - Large section gaps */
+--space-12: 3rem;    /* 48px - Major layout spacing */
+--space-16: 4rem;    /* 64px - Page-level spacing */
+
+/* Border Radius */
+--radius-sm: 4px;    /* Small elements, tags */
+--radius-md: 8px;    /* Cards, buttons, inputs */
+--radius-lg: 12px;   /* Modal dialogs, panels */
+--radius-full: 9999px; /* Pills, avatars */
+```
+
+### Animation Specifications - "Living Workspace Timing"
+```css
+/* Timing Functions */
+--ease-ui: cubic-bezier(0.4, 0, 0.2, 1);      /* UI interactions */
+--ease-in: cubic-bezier(0.4, 0, 1, 1);        /* Entrance animations */
+--ease-out: cubic-bezier(0, 0, 0.2, 1);       /* Exit animations */
+--ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);  /* Bi-directional */
+
+/* Duration Scale */
+--duration-fast: 150ms;    /* Micro-interactions, hovers */
+--duration-base: 300ms;    /* Standard transitions */
+--duration-slow: 500ms;    /* Complex state changes */
+--duration-slower: 800ms;  /* Layout morphing, mode switches */
+
+/* Signature Animations */
+.hover-lift { 
+  transition: transform 150ms var(--ease-out), box-shadow 150ms var(--ease-out);
+  transform: translateY(-1px); 
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
+}
+
+.breathing-animation {
+  animation: breathe 3s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%, 100% { transform: scale(1.0); }
+  50% { transform: scale(1.02); }
+}
+
+.shake-error {
+  animation: shake 200ms ease-in-out 3;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+```
+
+### Component Specifications
+
+#### Document Cards
+- **Dimensions**: 240px × 160px (3:2 aspect ratio)
+- **Border Radius**: 8px with 2px border
+- **Shadow**: `0 2px 8px rgba(0,0,0,0.1)` default, `0 8px 24px rgba(59, 130, 246, 0.15)` on hover
+- **Thumbnail Area**: 240px × 100px with file type icon overlay
+- **Metadata Area**: 60px height with filename, user, date, confidence indicators
+- **Connection Points**: 8 anchor points (corners + midpoints) for relationship lines
+
+#### Connection Lines
+- **Style**: 2px solid with rounded line caps
+- **Colors**: Blue (#3B82F6) confirmed, Orange (#F59E0B) suggested, Red (#EF4444) conflicts
+- **Animation**: Electric pulse effect using CSS gradients and transforms
+- **Interaction**: Magnetic snap within 20px of connection points
+
+#### Progress Indicators
+- **Circular Progress**: 32px diameter with 3px stroke width
+- **Linear Progress**: 4px height with rounded ends and smooth fill animation
+- **Color Transitions**: Grey → Blue → Green based on completion percentage
+- **Text Integration**: Percentage display with typewriter effect for metadata extraction
+
+### Accessibility Specifications
+- **Focus Indicators**: 3px solid blue outline with 2px offset
+- **High Contrast**: Alternative color palette with 7:1 contrast ratios
+- **Keyboard Navigation**: Tab order follows visual flow, all interactions accessible
+- **Screen Reader**: ARIA labels, live regions for dynamic content, semantic markup
+- **Motion Sensitivity**: `prefers-reduced-motion` disables non-essential animations
+- **Font Scaling**: Supports platform-native font scaling up to 200% without layout breaking (Windows Display Settings, macOS Accessibility, Linux desktop environment settings)
+
 ## Quality Rating Assessment
 
 This PRD is evaluated across seven critical categories to ensure professional-grade quality for single-user applications:
@@ -401,7 +699,7 @@ This PRD is evaluated across seven critical categories to ensure professional-gr
 ### 10/10 Rating Justification
 
 **Security Excellence (10/10)**:
-- Secure local credential storage using Windows DPAPI encryption
+- Secure cross-platform credential storage using AES-256 encryption with platform-specific secure storage fallback (DPAPI on Windows, Keychain on macOS)
 - Comprehensive input validation and sanitization
 - Secure TLS 1.2+ communications with API endpoints
 - Session timeout mechanisms for idle periods
@@ -465,7 +763,7 @@ This PRD is evaluated across seven critical categories to ensure professional-gr
 
 Based on enterprise best practices and the requirements analysis, the following decisions have been made:
 
-1. **OCR Support**: Yes, the tool will include OCR capabilities using Windows OCR API with Tesseract as fallback (FR-11)
+1. **OCR Support**: Yes, the tool will include cross-platform OCR capabilities using Tesseract.NET primary with platform-specific OCR APIs as enhancement (Windows OCR API, etc.) (FR-11)
 2. **Network Security**: Full proxy support (HTTP/HTTPS/SOCKS) and certificate validation options included (FR-28, FR-29)
 3. **Backup Strategy**: 30-day configurable local backup retention with JSON/CSV export (FR-39, FR-40)
 4. **Performance Targets**: 5-minute processing for 100-file batches, 50MB individual file limit, 1GB total batch limit (FR-41-44)

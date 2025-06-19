@@ -251,7 +251,7 @@ The repository includes comprehensive quality gates:
 - **Issues**: Bug reports and feature requests
 - **Discussions**: Community Q&A and ideas
 - **Security**: Private vulnerability reporting
-- **Email**: Direct contact for sensitive matters
+- **Email**: dev@thehivehl.cc for direct contact on sensitive matters
 
 ---
 

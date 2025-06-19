@@ -346,6 +346,8 @@ Mockups, examples, or references
 - **GitHub Discussions**: [Project Discussions](../../discussions)
 - **Issues**: [GitHub Issues](../../issues)
 - **Documentation**: [Project Docs](docs/)
+- **Security Contact**: dev@thehivehl.cc (for security-related questions)
+- **General Contact**: dev@thehivehl.cc (response within 48 hours)
 
 ## 🙏 Recognition
 

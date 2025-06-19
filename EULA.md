@@ -85,7 +85,7 @@ This EULA is governed by the laws of [Your Jurisdiction] without regard to confl
 
 For questions about this EULA, please contact:
 - GitHub Issues: [Repository URL]
-- Email: [Contact Email]
+- Email: dev@thehivehl.cc
 
 ### 16. ACKNOWLEDGMENT
 
