@@ -1,4 +1,5 @@
 using AnomaliImportTool.Core.Models;
+using AnomaliImportTool.Infrastructure.Services;
 
 namespace AnomaliImportTool.Core.Interfaces;
 
@@ -147,6 +148,43 @@ public interface IImportTemplateService
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Latest version of the template</returns>
     Task<ImportTemplate?> GetLatestTemplateVersionAsync(string templateName, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets a specific version of a template
+    /// </summary>
+    /// <param name="templateId">Template ID</param>
+    /// <param name="version">Version number</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Template version if found, null otherwise</returns>
+    Task<ImportTemplate?> GetTemplateVersionAsync(Guid templateId, string version, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Rolls back a template to a previous version
+    /// </summary>
+    /// <param name="templateId">Template ID</param>
+    /// <param name="targetVersion">Version to rollback to</param>
+    /// <param name="rollbackReason">Reason for rollback</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Template after rollback</returns>
+    Task<ImportTemplate> RollbackToVersionAsync(Guid templateId, string targetVersion, string rollbackReason = "", CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the change history for a template
+    /// </summary>
+    /// <param name="templateId">Template ID</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Change history records</returns>
+    Task<IEnumerable<TemplateChangeRecord>> GetTemplateChangeHistoryAsync(Guid templateId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Compares two versions of a template
+    /// </summary>
+    /// <param name="templateId">Template ID</param>
+    /// <param name="version1">First version to compare</param>
+    /// <param name="version2">Second version to compare</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Comparison result with differences</returns>
+    Task<TemplateComparisonResult> CompareTemplateVersionsAsync(Guid templateId, string version1, string version2, CancellationToken cancellationToken = default);
 
     #endregion
 

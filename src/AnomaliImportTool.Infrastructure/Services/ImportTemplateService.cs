@@ -939,22 +939,281 @@ public class ImportTemplateService : IImportTemplateService
 
     #endregion
 
-    // Partial implementation - remaining methods to be implemented in subsequent tasks
-    #region Template Versioning - Placeholder
+    #region Template Versioning Operations
 
     public async Task<ImportTemplate> CreateTemplateVersionAsync(Guid templateId, string newVersion, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException("Template versioning will be implemented in task 2.4");
+        try
+        {
+            _logger.LogInformation("Creating new version {Version} for template {TemplateId}", newVersion, templateId);
+
+            var existingTemplate = await GetTemplateAsync(templateId, cancellationToken);
+            if (existingTemplate == null)
+            {
+                throw new InvalidOperationException($"Template with ID {templateId} not found");
+            }
+
+            // Check if version already exists
+            var existingVersion = await GetTemplateVersionAsync(templateId, newVersion, cancellationToken);
+            if (existingVersion != null)
+            {
+                throw new InvalidOperationException($"Version {newVersion} already exists for template {templateId}");
+            }
+
+            // Create new version of the template
+            var newVersionTemplate = existingTemplate.CreateVersion(newVersion);
+            newVersionTemplate.LastModifiedAt = DateTime.UtcNow;
+
+            using var connection = await _databaseService.CreateAndOpenConnectionAsync();
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                // Create version history record with previous state
+                await CreateVersionHistoryRecordAsync(connection, transaction, templateId, existingTemplate, 
+                    $"Backup before creating version {newVersion}", cancellationToken);
+
+                // Update the template with new version
+                existingTemplate.Version = newVersion;
+                existingTemplate.LastModifiedAt = DateTime.UtcNow;
+                await UpdateTemplateInternalAsync(connection, transaction, existingTemplate, cancellationToken);
+
+                // Create version history record for new version
+                await CreateVersionHistoryRecordAsync(connection, transaction, templateId, existingTemplate, 
+                    $"Created version {newVersion}", cancellationToken);
+
+                transaction.Commit();
+                
+                _logger.LogInformation("Template version {Version} created successfully for template {TemplateId}", newVersion, templateId);
+                return existingTemplate;
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create template version {Version} for template {TemplateId}", newVersion, templateId);
+            throw;
+        }
     }
 
     public async Task<IEnumerable<ImportTemplate>> GetTemplateVersionsAsync(string templateName, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException("Template versioning will be implemented in task 2.4");
+        try
+        {
+            using var connection = await _databaseService.CreateAndOpenConnectionAsync();
+            
+            const string sql = @"
+                SELECT tv.version_number, tv.created_at, tv.created_by, tv.version_description,
+                       tv.template_data
+                FROM template_versions tv
+                INNER JOIN import_templates it ON tv.template_id = it.id
+                WHERE it.name = @templateName
+                ORDER BY tv.created_at DESC";
+
+            using var command = new SqliteCommand(sql, connection);
+            command.Parameters.AddWithValue("@templateName", templateName);
+
+            var versions = new List<ImportTemplate>();
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                var templateData = reader.GetString("template_data");
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var template = JsonSerializer.Deserialize<ImportTemplate>(templateData, options);
+                if (template != null)
+                {
+                    versions.Add(template);
+                }
+            }
+
+            return versions;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get template versions for: {TemplateName}", templateName);
+            throw;
+        }
     }
 
     public async Task<ImportTemplate?> GetLatestTemplateVersionAsync(string templateName, CancellationToken cancellationToken = default)
     {
         return await GetTemplateByNameAsync(templateName, cancellationToken);
+    }
+
+    public async Task<ImportTemplate?> GetTemplateVersionAsync(Guid templateId, string version, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var connection = await _databaseService.CreateAndOpenConnectionAsync();
+            
+            const string sql = @"
+                SELECT tv.template_data
+                FROM template_versions tv
+                WHERE tv.template_id = @templateId AND tv.version_number = @version";
+
+            using var command = new SqliteCommand(sql, connection);
+            command.Parameters.AddWithValue("@templateId", templateId.ToString());
+            command.Parameters.AddWithValue("@version", version);
+
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            if (await reader.ReadAsync(cancellationToken))
+            {
+                var templateData = reader.GetString("template_data");
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                return JsonSerializer.Deserialize<ImportTemplate>(templateData, options);
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get template version {Version} for template {TemplateId}", version, templateId);
+            throw;
+        }
+    }
+
+    public async Task<ImportTemplate> RollbackToVersionAsync(Guid templateId, string targetVersion, string rollbackReason = "", CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Rolling back template {TemplateId} to version {Version}", templateId, targetVersion);
+
+            var targetVersionTemplate = await GetTemplateVersionAsync(templateId, targetVersion, cancellationToken);
+            if (targetVersionTemplate == null)
+            {
+                throw new InvalidOperationException($"Target version {targetVersion} not found for template {templateId}");
+            }
+
+            var currentTemplate = await GetTemplateAsync(templateId, cancellationToken);
+            if (currentTemplate == null)
+            {
+                throw new InvalidOperationException($"Template {templateId} not found");
+            }
+
+            using var connection = await _databaseService.CreateAndOpenConnectionAsync();
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                // Create backup of current version before rollback
+                await CreateVersionHistoryRecordAsync(connection, transaction, templateId, currentTemplate, 
+                    $"Backup before rollback to {targetVersion}", cancellationToken);
+
+                // Update current template with target version data
+                targetVersionTemplate.Id = templateId;
+                targetVersionTemplate.LastModifiedAt = DateTime.UtcNow;
+                targetVersionTemplate.Version = IncrementVersion(currentTemplate.Version);
+
+                await UpdateTemplateInternalAsync(connection, transaction, targetVersionTemplate, cancellationToken);
+
+                // Record the rollback operation
+                await CreateVersionHistoryRecordAsync(connection, transaction, templateId, targetVersionTemplate, 
+                    $"Rollback to version {targetVersion}: {rollbackReason}", cancellationToken);
+
+                transaction.Commit();
+                
+                _logger.LogInformation("Template {TemplateId} successfully rolled back to version {Version}", templateId, targetVersion);
+                return targetVersionTemplate;
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to rollback template {TemplateId} to version {Version}", templateId, targetVersion);
+            throw;
+        }
+    }
+
+    public async Task<IEnumerable<TemplateChangeRecord>> GetTemplateChangeHistoryAsync(Guid templateId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var connection = await _databaseService.CreateAndOpenConnectionAsync();
+            
+            const string sql = @"
+                SELECT id, template_id, version_number, version_description, created_by, created_at, is_current
+                FROM template_versions
+                WHERE template_id = @templateId
+                ORDER BY created_at DESC";
+
+            using var command = new SqliteCommand(sql, connection);
+            command.Parameters.AddWithValue("@templateId", templateId.ToString());
+
+            var changeHistory = new List<TemplateChangeRecord>();
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                var changeRecord = new TemplateChangeRecord
+                {
+                    Id = Guid.Parse(reader.GetString("id")),
+                    TemplateId = templateId,
+                    Version = reader.GetString("version_number"),
+                    ChangeDescription = reader.IsDBNull("version_description") ? "" : reader.GetString("version_description"),
+                    ChangedBy = reader.IsDBNull("created_by") ? "" : reader.GetString("created_by"),
+                    ChangeDate = reader.GetDateTime("created_at"),
+                    IsCurrent = reader.GetBoolean("is_current")
+                };
+                changeHistory.Add(changeRecord);
+            }
+
+            return changeHistory;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get change history for template {TemplateId}", templateId);
+            throw;
+        }
+    }
+
+    public async Task<TemplateComparisonResult> CompareTemplateVersionsAsync(Guid templateId, string version1, string version2, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("Comparing template versions {Version1} and {Version2} for template {TemplateId}", version1, version2, templateId);
+
+            var template1 = await GetTemplateVersionAsync(templateId, version1, cancellationToken);
+            var template2 = await GetTemplateVersionAsync(templateId, version2, cancellationToken);
+
+            if (template1 == null || template2 == null)
+            {
+                throw new InvalidOperationException($"One or both template versions not found");
+            }
+
+            var comparison = new TemplateComparisonResult
+            {
+                TemplateId = templateId,
+                Version1 = version1,
+                Version2 = version2,
+                ComparisonDate = DateTime.UtcNow
+            };
+
+            // Compare basic properties
+            CompareBasicProperties(template1, template2, comparison);
+
+            // Compare fields
+            CompareTemplateFields(template1.Fields, template2.Fields, comparison);
+
+            // Compare extraction zones
+            CompareExtractionZones(template1, template2, comparison);
+
+            _logger.LogDebug("Template version comparison completed for {TemplateId}", templateId);
+            return comparison;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to compare template versions for template {TemplateId}", templateId);
+            throw;
+        }
     }
 
     #endregion
@@ -1048,4 +1307,244 @@ public class ImportTemplateService : IImportTemplateService
     }
 
     #endregion
+
+    #region Versioning Helper Methods
+
+    private async Task CreateVersionHistoryRecordAsync(SqliteConnection connection, SqliteTransaction transaction, 
+        Guid templateId, ImportTemplate template, string description, CancellationToken cancellationToken)
+    {
+        const string sql = @"
+            INSERT INTO template_versions (
+                id, template_id, version_number, version_description, template_data,
+                created_by, created_at, is_current
+            ) VALUES (
+                @id, @template_id, @version_number, @version_description, @template_data,
+                @created_by, @created_at, @is_current
+            )";
+
+        using var command = new SqliteCommand(sql, connection, transaction);
+        command.Parameters.AddWithValue("@id", Guid.NewGuid().ToString());
+        command.Parameters.AddWithValue("@template_id", templateId.ToString());
+        command.Parameters.AddWithValue("@version_number", template.Version);
+        command.Parameters.AddWithValue("@version_description", description);
+        command.Parameters.AddWithValue("@template_data", JsonSerializer.Serialize(template));
+        command.Parameters.AddWithValue("@created_by", template.LastModifiedBy ?? (object)DBNull.Value);
+        command.Parameters.AddWithValue("@created_at", DateTime.UtcNow);
+        command.Parameters.AddWithValue("@is_current", false); // Historical versions are not current
+
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private async Task UpdateTemplateInternalAsync(SqliteConnection connection, SqliteTransaction transaction, 
+        ImportTemplate template, CancellationToken cancellationToken)
+    {
+        // Update main template record
+        const string updateTemplateSql = @"
+            UPDATE import_templates SET
+                name = @name, description = @description, version = @version, 
+                category = @category, last_modified_by = @last_modified_by,
+                last_modified_at = @last_modified_at, is_active = @is_active,
+                tags = @tags, supported_formats = @supported_formats,
+                confidence_threshold = @confidence_threshold, auto_apply = @auto_apply,
+                allow_partial_matches = @allow_partial_matches, template_priority = @template_priority,
+                document_matching_criteria = @document_matching_criteria,
+                ocr_settings = @ocr_settings, template_validation = @template_validation,
+                usage_stats = @usage_stats
+            WHERE id = @id";
+
+        using var command = new SqliteCommand(updateTemplateSql, connection, transaction);
+        AddTemplateParameters(command, template);
+        await command.ExecuteNonQueryAsync(cancellationToken);
+
+        // Delete existing fields and zones
+        await DeleteTemplateFieldsAsync(connection, transaction, template.Id, cancellationToken);
+
+        // Insert updated fields
+        await InsertTemplateFieldsAsync(connection, transaction, template.Id, template.Fields, cancellationToken);
+    }
+
+    private string IncrementVersion(string currentVersion)
+    {
+        try
+        {
+            var parts = currentVersion.Split('.');
+            if (parts.Length >= 3 && int.TryParse(parts[2], out var patch))
+            {
+                parts[2] = (patch + 1).ToString();
+                return string.Join(".", parts);
+            }
+            
+            // Fallback: append .1 if version format is unexpected
+            return $"{currentVersion}.1";
+        }
+        catch
+        {
+            // Fallback for any parsing errors
+            return $"{currentVersion}.1";
+        }
+    }
+
+    private void CompareBasicProperties(ImportTemplate template1, ImportTemplate template2, TemplateComparisonResult comparison)
+    {
+        if (template1.Name != template2.Name)
+            comparison.Differences.Add(new TemplateDifference { Property = "Name", Value1 = template1.Name, Value2 = template2.Name });
+
+        if (template1.Description != template2.Description)
+            comparison.Differences.Add(new TemplateDifference { Property = "Description", Value1 = template1.Description, Value2 = template2.Description });
+
+        if (template1.Category != template2.Category)
+            comparison.Differences.Add(new TemplateDifference { Property = "Category", Value1 = template1.Category, Value2 = template2.Category });
+
+        if (template1.ConfidenceThreshold != template2.ConfidenceThreshold)
+            comparison.Differences.Add(new TemplateDifference { Property = "ConfidenceThreshold", Value1 = template1.ConfidenceThreshold.ToString(), Value2 = template2.ConfidenceThreshold.ToString() });
+
+        if (template1.AutoApply != template2.AutoApply)
+            comparison.Differences.Add(new TemplateDifference { Property = "AutoApply", Value1 = template1.AutoApply.ToString(), Value2 = template2.AutoApply.ToString() });
+    }
+
+    private void CompareTemplateFields(List<TemplateField> fields1, List<TemplateField> fields2, TemplateComparisonResult comparison)
+    {
+        var fields1Dict = fields1.ToDictionary(f => f.Name, f => f);
+        var fields2Dict = fields2.ToDictionary(f => f.Name, f => f);
+
+        // Check for added fields
+        foreach (var field in fields2Dict.Values.Where(f => !fields1Dict.ContainsKey(f.Name)))
+        {
+            comparison.Differences.Add(new TemplateDifference 
+            { 
+                Property = $"Field.{field.Name}", 
+                Value1 = null, 
+                Value2 = $"Added: {field.FieldType}" 
+            });
+        }
+
+        // Check for removed fields
+        foreach (var field in fields1Dict.Values.Where(f => !fields2Dict.ContainsKey(f.Name)))
+        {
+            comparison.Differences.Add(new TemplateDifference 
+            { 
+                Property = $"Field.{field.Name}", 
+                Value1 = $"Removed: {field.FieldType}", 
+                Value2 = null 
+            });
+        }
+
+        // Check for modified fields
+        foreach (var fieldName in fields1Dict.Keys.Intersect(fields2Dict.Keys))
+        {
+            var field1 = fields1Dict[fieldName];
+            var field2 = fields2Dict[fieldName];
+
+            if (field1.FieldType != field2.FieldType)
+                comparison.Differences.Add(new TemplateDifference 
+                { 
+                    Property = $"Field.{fieldName}.Type", 
+                    Value1 = field1.FieldType.ToString(), 
+                    Value2 = field2.FieldType.ToString() 
+                });
+
+            if (field1.ExtractionMethod != field2.ExtractionMethod)
+                comparison.Differences.Add(new TemplateDifference 
+                { 
+                    Property = $"Field.{fieldName}.ExtractionMethod", 
+                    Value1 = field1.ExtractionMethod.ToString(), 
+                    Value2 = field2.ExtractionMethod.ToString() 
+                });
+
+            if (field1.IsRequired != field2.IsRequired)
+                comparison.Differences.Add(new TemplateDifference 
+                { 
+                    Property = $"Field.{fieldName}.IsRequired", 
+                    Value1 = field1.IsRequired.ToString(), 
+                    Value2 = field2.IsRequired.ToString() 
+                });
+        }
+    }
+
+    private void CompareExtractionZones(ImportTemplate template1, ImportTemplate template2, TemplateComparisonResult comparison)
+    {
+        var zones1 = template1.Fields.SelectMany(f => f.ExtractionZones).ToList();
+        var zones2 = template2.Fields.SelectMany(f => f.ExtractionZones).ToList();
+
+        if (zones1.Count != zones2.Count)
+        {
+            comparison.Differences.Add(new TemplateDifference 
+            { 
+                Property = "ExtractionZones.Count", 
+                Value1 = zones1.Count.ToString(), 
+                Value2 = zones2.Count.ToString() 
+            });
+        }
+
+        // More detailed zone comparison could be added here
+        var zoneChanges = Math.Abs(zones1.Count - zones2.Count);
+        if (zoneChanges > 0)
+        {
+            comparison.Differences.Add(new TemplateDifference 
+            { 
+                Property = "ExtractionZones.Changes", 
+                Value1 = zones1.Count.ToString(), 
+                Value2 = zones2.Count.ToString() 
+            });
+        }
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// Represents a change record in template version history
+/// </summary>
+public class TemplateChangeRecord
+{
+    public Guid Id { get; set; }
+    public Guid TemplateId { get; set; }
+    public string Version { get; set; } = string.Empty;
+    public string ChangeDescription { get; set; } = string.Empty;
+    public string ChangedBy { get; set; } = string.Empty;
+    public DateTime ChangeDate { get; set; }
+    public bool IsCurrent { get; set; }
+}
+
+/// <summary>
+/// Results of comparing two template versions
+/// </summary>
+public class TemplateComparisonResult
+{
+    public Guid TemplateId { get; set; }
+    public string Version1 { get; set; } = string.Empty;
+    public string Version2 { get; set; } = string.Empty;
+    public DateTime ComparisonDate { get; set; }
+    public List<TemplateDifference> Differences { get; set; } = new();
+    public bool HasDifferences => Differences.Count > 0;
+    public int DifferenceCount => Differences.Count;
+}
+
+/// <summary>
+/// Represents a specific difference between template versions
+/// </summary>
+public class TemplateDifference
+{
+    public string Property { get; set; } = string.Empty;
+    public string? Value1 { get; set; }
+    public string? Value2 { get; set; }
+    public TemplateDifferenceType DifferenceType 
+    { 
+        get
+        {
+            if (Value1 == null) return TemplateDifferenceType.Added;
+            if (Value2 == null) return TemplateDifferenceType.Removed;
+            return TemplateDifferenceType.Modified;
+        }
+    }
+}
+
+/// <summary>
+/// Types of differences between template versions
+/// </summary>
+public enum TemplateDifferenceType
+{
+    Added,
+    Removed,
+    Modified
 } 
