@@ -6,6 +6,7 @@ using System.Windows.Media.Imaging;
 using AnomaliImportTool.Core.Models;
 using AnomaliImportTool.WPF.Commands;
 using System.Linq;
+using Microsoft.Win32;
 
 namespace AnomaliImportTool.WPF.ViewModels;
 
@@ -45,6 +46,7 @@ public class TemplateCreationViewModel : INotifyPropertyChanged
     public ICommand RemoveFieldCommand { get; }
     public ICommand SaveTemplateCommand { get; }
     public ICommand ValidateTemplateCommand { get; }
+    public ICommand TestTemplateCommand { get; }
 
     public TemplateCreationViewModel()
     {
@@ -52,6 +54,7 @@ public class TemplateCreationViewModel : INotifyPropertyChanged
         RemoveFieldCommand = new RelayCommand(_ => RemoveField(), _ => SelectedField != null);
         SaveTemplateCommand = new RelayCommand(_ => SaveTemplate());
         ValidateTemplateCommand = new RelayCommand(_ => ValidateTemplate());
+        TestTemplateCommand = new RelayCommand(_ => TestTemplate());
         // Populate PreviewResults with placeholder values
         PreviewResults.Add(new FieldExtractionPreview { FieldName = "SampleField", Value = "Value", Confidence = 0.85 });
     }
@@ -105,6 +108,30 @@ public class TemplateCreationViewModel : INotifyPropertyChanged
                 ValidationErrors.Add(error);
         }
         return result.IsValid;
+    }
+
+    private void TestTemplate()
+    {
+        var openDialog = new OpenFileDialog
+        {
+            Filter = "Documents|*.pdf;*.docx;*.xlsx|All Files|*.*",
+            Title = "Select sample document"
+        };
+        if (openDialog.ShowDialog() == true)
+        {
+            // Placeholder: simulate test result
+            PreviewResults.Clear();
+            var rnd = new Random();
+            foreach (var field in Fields)
+            {
+                PreviewResults.Add(new FieldExtractionPreview
+                {
+                    FieldName = field.Name,
+                    Value = "SampleValue",
+                    Confidence = Math.Round(rnd.NextDouble(), 2)
+                });
+            }
+        }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

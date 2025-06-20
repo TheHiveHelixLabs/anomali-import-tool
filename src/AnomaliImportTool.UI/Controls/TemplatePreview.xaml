@@ -13,6 +13,21 @@
                 <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="2*"/>
                 <DataGridTextColumn Header="Confidence" Binding="{Binding Confidence, StringFormat={}{0:P0}}" Width="*"/>
             </DataGrid.Columns>
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Confidence}" Value="0.8">
+                            <Setter Property="Background" Value="#3328A745" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Confidence}" Value="0.5">
+                            <Setter Property="Background" Value="#33FFC107" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Confidence}" Value="0.3">
+                            <Setter Property="Background" Value="#33F44336" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
         </DataGrid>
     </Border>
 </UserControl> 
