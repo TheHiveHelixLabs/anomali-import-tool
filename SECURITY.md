@@ -55,11 +55,11 @@ We believe in recognizing security researchers who help improve our security:
 
 ### For Users
 
-#### Installation Security
+#### Application Security
 - Download only from official sources (GitHub Releases)
-- Verify file hashes and digital signatures
-- Use administrator privileges only when necessary
-- Install in secure directories with appropriate permissions
+- Verify file hashes and digital signatures when available
+- No administrator privileges required - runs in user context
+- Store in secure directories with appropriate permissions (any location)
 
 #### Configuration Security
 - Use strong, unique passwords for ThreatStream accounts

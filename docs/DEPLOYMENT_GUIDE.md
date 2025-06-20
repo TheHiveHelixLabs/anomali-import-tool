@@ -2,7 +2,7 @@
 
 ## Overview
 
-Thanks to the successful Uno Platform migration, the Anomali Import Tool can now be deployed as native applications across all major operating systems. This guide covers creating distributable binaries for Linux (.deb packages), macOS (app bundles), and Windows (installers).
+Thanks to the successful Uno Platform migration, the Anomali Import Tool can now be deployed as **standalone portable applications** across all major operating systems. This guide covers creating distributable binaries for Linux (AppImages), macOS (app bundles), and Windows (executables) that require **NO INSTALLATION**.
 
 ---
 
@@ -10,13 +10,13 @@ Thanks to the successful Uno Platform migration, the Anomali Import Tool can now
 
 | Platform | Package Format | Distribution Method | Status |
 |----------|---------------|-------------------|---------|
-| **Linux** | `.deb` package | APT repositories, direct install | ✅ Ready |
-| **Linux** | `AppImage` | Universal Linux binary | ✅ Ready |
-| **macOS** | `.app` bundle | App Store, direct download | ✅ Ready |
-| **macOS** | `.dmg` installer | Direct download | ✅ Ready |
-| **Windows** | `.exe` installer | Microsoft Store, direct download | ✅ Ready |
-| **Windows** | `.msi` package | Enterprise deployment | ✅ Ready |
-| **Web** | WebAssembly | Browser-based access | ✅ Ready |
+| **Linux** | `AppImage` | Universal portable binary | ✅ Ready |
+| **Linux** | `.tar.gz` | Compressed standalone application | ✅ Ready |
+| **macOS** | `.app` bundle | Portable app bundle | ✅ Ready |
+| **macOS** | `.zip` archive | Compressed portable app | ✅ Ready |
+| **Windows** | `.exe` executable | Standalone self-contained binary | ✅ Ready |
+| **Windows** | `.zip` archive | Compressed portable application | ✅ Ready |
+| **Web** | WebAssembly | Browser-based access (no download) | ✅ Ready |
 
 ---
 
@@ -423,41 +423,38 @@ echo "📦 Next: Run packaging scripts for your target platform"
 
 ---
 
-## 📋 **Installation Instructions**
+## 📋 **Running the Application**
 
-### Linux (.deb)
+### Linux (AppImage - No Installation)
 ```bash
-# Install .deb package
-sudo dpkg -i anomali-import-tool_1.0.0_amd64.deb
-
-# Or install dependencies if needed
-sudo apt-get install -f
-
-# Run application
-anomali-import-tool
-```
-
-### Linux (AppImage)
-```bash
-# Make executable and run
+# Make executable and run directly
 chmod +x AnomaliImportTool-1.0.0-x86_64.AppImage
 ./AnomaliImportTool-1.0.0-x86_64.AppImage
 ```
 
-### macOS
+### Linux (Binary Archive - No Installation)
 ```bash
-# Install from DMG (drag to Applications)
-# Or run app bundle directly
+# Extract and run
+tar -xzf AnomaliImportTool-1.0.0-linux-x64.tar.gz
+cd AnomaliImportTool-1.0.0-linux-x64
+./AnomaliImportTool
+```
+
+### macOS (Portable App Bundle - No Installation)
+```bash
+# Unzip and run directly (no Applications folder needed)
+unzip AnomaliImportTool-1.0.0-osx.app.zip
 open "Anomali Import Tool.app"
 ```
 
-### Windows
-```bash
-# Run installer
-AnomaliImportTool-Setup-1.0.0.exe
+### Windows (Standalone Executable - No Installation)
+```powershell
+# Run directly - no installation required
+AnomaliImportTool-1.0.0-win-x64.exe
 
-# Or install MSI silently
-msiexec /i AnomaliImportTool-1.0.0.msi /quiet
+# Or extract from ZIP and run
+Expand-Archive AnomaliImportTool-1.0.0-win-x64.zip
+.\AnomaliImportTool-1.0.0-win-x64\AnomaliImportTool.exe
 ```
 
 ---
@@ -469,15 +466,15 @@ msiexec /i AnomaliImportTool-1.0.0.msi /quiet
 - **Company Website**: Direct download links
 - **Enterprise Portal**: Internal distribution
 
-### Package Repositories
-- **Linux**: APT repository, Snap Store, Flatpak
-- **macOS**: Homebrew, Mac App Store (with signing)
-- **Windows**: Microsoft Store, Chocolatey, Winget
+### Portable Distribution
+- **Direct Copy**: Copy executable/app bundle to target systems
+- **File Sharing**: Distribute via network shares, email, or file transfer
+- **Cloud Storage**: Share via OneDrive, Dropbox, Google Drive, etc.
 
 ### Enterprise Distribution
-- **Group Policy**: MSI deployment via Active Directory
-- **MDM Solutions**: Intune, JAMF, etc.
-- **Container Images**: Docker containers for server environments
+- **Network Shares**: Deploy to shared network locations for easy access
+- **USB Distribution**: Copy to USB drives for air-gapped environments
+- **Cloud Distribution**: Host on internal file servers or cloud storage
 
 ---
 

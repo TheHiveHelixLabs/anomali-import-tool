@@ -20,7 +20,7 @@ Welcome to the comprehensive user guide for the Anomali Threat Bulletin Import T
 
 ### 🚀 **Getting Started**
 - [⚡ **Quick Start Guide**](quick-start.md) - Get up and running in 5 minutes
-- [💾 **Installation Guide**](installation.md) - Cross-platform deployment instructions  
+- [🚀 **Getting Started Guide**](getting-started.md) - Standalone deployment across platforms  
 - [🎬 **First Import Tutorial**](tutorials/first-import.md) - Step-by-step walkthrough
 
 ### 📋 **Import Template System** *(New Feature)*

@@ -6,7 +6,7 @@ Welcome to the comprehensive documentation for the Anomali Threat Bulletin Impor
 
 ### 🚀 **Getting Started**
 - [⚡ Quick Start Guide](user-guide/quick-start.md) - Get up and running in 5 minutes
-- [💾 Installation Guide](user-guide/installation.md) - Cross-platform deployment instructions
+- [🚀 Getting Started Guide](user-guide/getting-started.md) - Standalone deployment across platforms
 - [🔧 Troubleshooting](user-guide/support/troubleshooting.md) - Common issues and solutions
 
 ### 👥 **User Guides**
@@ -81,7 +81,7 @@ Zero-trust security model with comprehensive protection:
 
 ### For End Users
 1. **Start Here**: [Quick Start Guide](user-guide/quick-start.md)
-2. **Installation**: [Cross-Platform Installation](user-guide/installation.md)
+2. **Getting Started**: [Standalone Deployment](user-guide/getting-started.md)
 3. **Templates**: [Template Creation Guide](user-guide/template-creation.md)
 4. **Troubleshooting**: [Common Issues](user-guide/support/troubleshooting.md)
 

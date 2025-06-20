@@ -12,32 +12,32 @@ Before you begin, ensure you have:
 
 ## 📥 Step 1: Download & Launch (1 minute)
 
+### 🚫 **NO INSTALLATION REQUIRED** - Simply Download and Run
+
 ### Windows
 ```powershell
-# Download the latest Windows installer
-# Double-click AnomaliImportTool-Setup-1.0.0.exe
-# Or run the portable .exe directly
+# Download the standalone executable
+# File: AnomaliImportTool-1.0.0-win-x64.exe
+# Double-click to run directly - no installation needed
 ```
 
 ### macOS
 ```bash
-# Download the .dmg file
-# Drag "Anomali Import Tool.app" to Applications
-# Launch from Applications or Launchpad
+# Download the portable app bundle
+# File: AnomaliImportTool-1.0.0-osx.app.zip
+# Unzip and double-click "Anomali Import Tool.app" to run
 ```
 
 ### Linux
 ```bash
-# Download and install .deb package
-sudo dpkg -i anomali-import-tool_1.0.0_amd64.deb
-
-# Or run the portable AppImage
+# Download the portable AppImage
+# File: AnomaliImportTool-1.0.0-x86_64.AppImage
 chmod +x AnomaliImportTool-1.0.0-x86_64.AppImage
 ./AnomaliImportTool-1.0.0-x86_64.AppImage
 ```
 
 ### Web Browser
-Visit the hosted web version at: `https://your-deployment-url.com`
+Visit the WebAssembly version at: `https://your-deployment-url.com` (no downloads needed)
 
 ## 🔧 Step 2: Initial Configuration (2 minutes)
 
