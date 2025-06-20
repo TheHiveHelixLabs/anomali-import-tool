@@ -78,7 +78,7 @@ The Anomali Threat Bulletin Import Tool is a **standalone, zero-installation** c
   - [x] 1.6 Create template storage schema in SQLite database with versioning and categorization support (FR-15) ✅
   - [x] 1.7 Implement JSON-based template serialization format for portability and sharing (FR-19) ✅
 
-- [ ] **2.0 Template Management Infrastructure**
+- [x] **2.0 Template Management Infrastructure**
   - [x] 2.1 Implement ImportTemplateService with full CRUD operations, categorization, and search capabilities (FR-15)
   - [x] 2.2 Implement TemplateMatchingService with document fingerprinting and confidence scoring algorithms (FR-16)
   - [x] 2.3 Create TemplateExtractionEngine for field extraction using regex, keyword matching, and coordinate zones (FR-13, FR-14)
