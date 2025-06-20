@@ -224,6 +224,41 @@ public interface IImportTemplateService
     /// <returns>Imported templates</returns>
     Task<IEnumerable<ImportTemplate>> ImportTemplatesAsync(string templatesJson, TemplateImportOptions? importOptions = null, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Exports templates to file system with bulk operation support
+    /// </summary>
+    /// <param name="templateIds">Template IDs to export</param>
+    /// <param name="filePath">Output file path</param>
+    /// <param name="exportFormat">Export format</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Export operation result</returns>
+    Task<TemplateExportResult> ExportTemplatesToFileAsync(IEnumerable<Guid> templateIds, string filePath, TemplateExportFormat exportFormat = TemplateExportFormat.Json, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Imports templates from file system with bulk operation support
+    /// </summary>
+    /// <param name="filePath">Input file path</param>
+    /// <param name="importOptions">Import options</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Import operation result</returns>
+    Task<TemplateImportBulkResult> ImportTemplatesFromFileAsync(string filePath, TemplateImportOptions? importOptions = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Exports all templates in a category
+    /// </summary>
+    /// <param name="category">Category to export</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>JSON representation of templates in the category</returns>
+    Task<string> ExportTemplatesByCategoryAsync(string category, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Validates imported templates without actually importing them
+    /// </summary>
+    /// <param name="templatesJson">JSON representation of templates to validate</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Validation results for each template</returns>
+    Task<TemplateImportValidationResult> ValidateImportAsync(string templatesJson, CancellationToken cancellationToken = default);
+
     #endregion
 
     #region Template Validation and Testing
@@ -477,6 +512,97 @@ public class TemplateImportOptions
     /// Whether to preserve creation dates
     /// </summary>
     public bool PreserveCreationDates { get; set; } = false;
+
+    /// <summary>
+    /// Whether to merge templates with the same name instead of overwriting
+    /// </summary>
+    public bool MergeExisting { get; set; } = false;
+
+    /// <summary>
+    /// Whether to skip templates that fail validation instead of stopping import
+    /// </summary>
+    public bool SkipInvalidTemplates { get; set; } = true;
+
+    /// <summary>
+    /// Whether to preserve template version numbers
+    /// </summary>
+    public bool PreserveVersions { get; set; } = false;
+
+    /// <summary>
+    /// Whether to preserve template inheritance relationships
+    /// </summary>
+    public bool PreserveInheritance { get; set; } = true;
+
+    /// <summary>
+    /// Category to assign to all imported templates (overrides existing categories)
+    /// </summary>
+    public string? OverrideCategory { get; set; }
+
+    /// <summary>
+    /// Tags to add to all imported templates
+    /// </summary>
+    public List<string> AdditionalTags { get; set; } = new();
+
+    /// <summary>
+    /// Prefix to add to template names to avoid conflicts
+    /// </summary>
+    public string? NamePrefix { get; set; }
+
+    /// <summary>
+    /// Suffix to add to template names to avoid conflicts
+    /// </summary>
+    public string? NameSuffix { get; set; }
+
+    /// <summary>
+    /// Whether to activate imported templates automatically
+    /// </summary>
+    public bool ActivateTemplates { get; set; } = true;
+
+    /// <summary>
+    /// Maximum number of templates to import in a single operation
+    /// </summary>
+    public int? MaxImportCount { get; set; }
+
+    /// <summary>
+    /// Conflict resolution strategy when templates with same name exist
+    /// </summary>
+    public TemplateConflictResolution ConflictResolution { get; set; } = TemplateConflictResolution.Fail;
+
+    /// <summary>
+    /// Additional import metadata to add to templates
+    /// </summary>
+    public Dictionary<string, object> ImportMetadata { get; set; } = new();
+}
+
+/// <summary>
+/// Conflict resolution strategies for template import
+/// </summary>
+public enum TemplateConflictResolution
+{
+    /// <summary>
+    /// Fail the import if a template with the same name exists
+    /// </summary>
+    Fail,
+
+    /// <summary>
+    /// Skip templates that already exist
+    /// </summary>
+    Skip,
+
+    /// <summary>
+    /// Overwrite existing templates
+    /// </summary>
+    Overwrite,
+
+    /// <summary>
+    /// Merge with existing templates
+    /// </summary>
+    Merge,
+
+    /// <summary>
+    /// Create new template with modified name
+    /// </summary>
+    Rename
 }
 
 /// <summary>
@@ -546,4 +672,214 @@ public enum SortDirection
 {
     Ascending,
     Descending
+}
+
+/// <summary>
+/// Template export format options
+/// </summary>
+public enum TemplateExportFormat
+{
+    /// <summary>
+    /// JSON format (default)
+    /// </summary>
+    Json,
+
+    /// <summary>
+    /// XML format
+    /// </summary>
+    Xml,
+
+    /// <summary>
+    /// YAML format
+    /// </summary>
+    Yaml
+}
+
+/// <summary>
+/// Result of template export operation
+/// </summary>
+public class TemplateExportResult
+{
+    /// <summary>
+    /// Whether the export was successful
+    /// </summary>
+    public bool IsSuccessful { get; set; }
+
+    /// <summary>
+    /// Number of templates exported
+    /// </summary>
+    public int ExportedCount { get; set; }
+
+    /// <summary>
+    /// Total number of templates requested for export
+    /// </summary>
+    public int RequestedCount { get; set; }
+
+    /// <summary>
+    /// File path where templates were exported
+    /// </summary>
+    public string FilePath { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Export format used
+    /// </summary>
+    public TemplateExportFormat Format { get; set; }
+
+    /// <summary>
+    /// Size of the exported file in bytes
+    /// </summary>
+    public long FileSizeBytes { get; set; }
+
+    /// <summary>
+    /// Time taken for the export operation
+    /// </summary>
+    public TimeSpan ExportDuration { get; set; }
+
+    /// <summary>
+    /// Templates that failed to export
+    /// </summary>
+    public List<Guid> FailedTemplateIds { get; set; } = new();
+
+    /// <summary>
+    /// Any errors encountered during export
+    /// </summary>
+    public List<string> Errors { get; set; } = new();
+
+    /// <summary>
+    /// Export metadata
+    /// </summary>
+    public Dictionary<string, object> ExportMetadata { get; set; } = new();
+}
+
+/// <summary>
+/// Result of bulk template import operation
+/// </summary>
+public class TemplateImportBulkResult
+{
+    /// <summary>
+    /// Whether the overall import was successful
+    /// </summary>
+    public bool IsSuccessful { get; set; }
+
+    /// <summary>
+    /// Total number of templates in the import file
+    /// </summary>
+    public int TotalCount { get; set; }
+
+    /// <summary>
+    /// Number of templates successfully imported
+    /// </summary>
+    public int SuccessfulCount { get; set; }
+
+    /// <summary>
+    /// Number of templates that failed to import
+    /// </summary>
+    public int FailedCount { get; set; }
+
+    /// <summary>
+    /// Number of templates that were skipped
+    /// </summary>
+    public int SkippedCount { get; set; }
+
+    /// <summary>
+    /// Individual import results for each template
+    /// </summary>
+    public List<TemplateImportResult> ImportResults { get; set; } = new();
+
+    /// <summary>
+    /// Successfully imported templates
+    /// </summary>
+    public List<ImportTemplate> ImportedTemplates { get; set; } = new();
+
+    /// <summary>
+    /// Time taken for the import operation
+    /// </summary>
+    public TimeSpan ImportDuration { get; set; }
+
+    /// <summary>
+    /// General import errors not specific to individual templates
+    /// </summary>
+    public List<string> GeneralErrors { get; set; } = new();
+
+    /// <summary>
+    /// Import summary statistics
+    /// </summary>
+    public Dictionary<string, object> ImportStatistics { get; set; } = new();
+}
+
+/// <summary>
+/// Result of template import validation
+/// </summary>
+public class TemplateImportValidationResult
+{
+    /// <summary>
+    /// Whether all templates passed validation
+    /// </summary>
+    public bool IsValid { get; set; }
+
+    /// <summary>
+    /// Total number of templates validated
+    /// </summary>
+    public int TotalCount { get; set; }
+
+    /// <summary>
+    /// Number of valid templates
+    /// </summary>
+    public int ValidCount { get; set; }
+
+    /// <summary>
+    /// Number of invalid templates
+    /// </summary>
+    public int InvalidCount { get; set; }
+
+    /// <summary>
+    /// Validation results for each template
+    /// </summary>
+    public List<TemplateValidationSummary> ValidationResults { get; set; } = new();
+
+    /// <summary>
+    /// General validation errors
+    /// </summary>
+    public List<string> GeneralErrors { get; set; } = new();
+}
+
+/// <summary>
+/// Summary of template validation
+/// </summary>
+public class TemplateValidationSummary
+{
+    /// <summary>
+    /// Template name
+    /// </summary>
+    public string TemplateName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Original template ID
+    /// </summary>
+    public Guid TemplateId { get; set; }
+
+    /// <summary>
+    /// Whether the template is valid
+    /// </summary>
+    public bool IsValid { get; set; }
+
+    /// <summary>
+    /// Validation errors
+    /// </summary>
+    public List<string> Errors { get; set; } = new();
+
+    /// <summary>
+    /// Validation warnings
+    /// </summary>
+    public List<string> Warnings { get; set; } = new();
+
+    /// <summary>
+    /// Whether the template would conflict with existing templates
+    /// </summary>
+    public bool HasConflicts { get; set; }
+
+    /// <summary>
+    /// Names of conflicting templates
+    /// </summary>
+    public List<string> ConflictingTemplateNames { get; set; } = new();
 } 

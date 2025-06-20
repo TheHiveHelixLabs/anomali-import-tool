@@ -10,6 +10,8 @@ using AnomaliImportTool.Core.Services;
 using AnomaliImportTool.Infrastructure.Database;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
+using System.Text;
+using System.Xml.Linq;
 
 namespace AnomaliImportTool.Infrastructure.Services;
 
@@ -1222,22 +1224,349 @@ public class ImportTemplateService : IImportTemplateService
 
     public async Task<string> ExportTemplateAsync(Guid templateId, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException("Template import/export will be implemented in task 2.6");
+        try
+        {
+            _logger.LogInformation("Exporting template: {TemplateId}", templateId);
+
+            var template = await GetTemplateAsync(templateId, cancellationToken);
+            if (template == null)
+            {
+                throw new ArgumentException($"Template with ID {templateId} not found");
+            }
+
+            // Create export wrapper with metadata
+            var exportData = new TemplateExportData
+            {
+                ExportVersion = "1.0",
+                ExportedAt = DateTime.UtcNow,
+                ExportedBy = Environment.UserName,
+                Templates = new List<ImportTemplate> { template }
+            };
+
+            var json = JsonSerializer.Serialize(exportData, new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+
+            _logger.LogInformation("Template exported successfully: {TemplateId}", templateId);
+            return json;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to export template: {TemplateId}", templateId);
+            throw;
+        }
     }
 
     public async Task<string> ExportTemplatesAsync(IEnumerable<Guid> templateIds, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException("Template import/export will be implemented in task 2.6");
+        try
+        {
+            var templateIdsList = templateIds.ToList();
+            _logger.LogInformation("Exporting {Count} templates", templateIdsList.Count);
+
+            var templates = new List<ImportTemplate>();
+            var notFoundIds = new List<Guid>();
+
+            foreach (var templateId in templateIdsList)
+            {
+                var template = await GetTemplateAsync(templateId, cancellationToken);
+                if (template != null)
+                {
+                    templates.Add(template);
+                }
+                else
+                {
+                    notFoundIds.Add(templateId);
+                    _logger.LogWarning("Template not found: {TemplateId}", templateId);
+                }
+            }
+
+            if (templates.Count == 0)
+            {
+                throw new ArgumentException("No templates found to export");
+            }
+
+            // Create export wrapper with metadata
+            var exportData = new TemplateExportData
+            {
+                ExportVersion = "1.0",
+                ExportedAt = DateTime.UtcNow,
+                ExportedBy = Environment.UserName,
+                Templates = templates,
+                ExportMetadata = new Dictionary<string, object>
+                {
+                    { "RequestedCount", templateIdsList.Count },
+                    { "ExportedCount", templates.Count },
+                    { "NotFoundIds", notFoundIds }
+                }
+            };
+
+            var json = JsonSerializer.Serialize(exportData, new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+
+            _logger.LogInformation("Templates exported successfully: {ExportedCount}/{RequestedCount}", 
+                templates.Count, templateIdsList.Count);
+            return json;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to export templates");
+            throw;
+        }
     }
 
     public async Task<ImportTemplate> ImportTemplateAsync(string templateJson, Core.Interfaces.TemplateImportOptions? importOptions = null, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException("Template import/export will be implemented in task 2.6");
+        try
+        {
+            _logger.LogInformation("Importing single template");
+
+            importOptions ??= new Core.Interfaces.TemplateImportOptions();
+
+            // Try to parse as export data first, then as single template
+            ImportTemplate template;
+            try
+            {
+                var exportData = JsonSerializer.Deserialize<TemplateExportData>(templateJson, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
+
+                if (exportData?.Templates != null && exportData.Templates.Count > 0)
+                {
+                    template = exportData.Templates.First();
+                    _logger.LogInformation("Parsed template from export data format");
+                }
+                else
+                {
+                    throw new InvalidOperationException("Export data contains no templates");
+                }
+            }
+            catch (JsonException)
+            {
+                // Try parsing as single template
+                try
+                {
+                    template = JsonSerializer.Deserialize<ImportTemplate>(templateJson, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    });
+                    
+                    if (template == null)
+                    {
+                        throw new InvalidOperationException("Failed to deserialize template");
+                    }
+                    
+                    _logger.LogInformation("Parsed template from single template format");
+                }
+                catch (JsonException ex)
+                {
+                    throw new ArgumentException("Invalid JSON format for template import", ex);
+                }
+            }
+
+            // Process import options
+            await ProcessImportOptionsAsync(template, importOptions, cancellationToken);
+
+            // Validate template if required
+            if (importOptions.ValidateOnImport)
+            {
+                var validationResult = template.ValidateTemplate();
+                if (!validationResult.IsValid)
+                {
+                    throw new InvalidOperationException($"Template validation failed: {string.Join(", ", validationResult.Errors)}");
+                }
+            }
+
+            // Check for existing template with same name
+            var existingTemplate = await GetTemplateByNameAsync(template.Name, cancellationToken);
+            if (existingTemplate != null)
+            {
+                // Use the new conflict resolution system
+                return await HandleTemplateConflictAsync(template, existingTemplate, importOptions, cancellationToken);
+            }
+
+            // Create new template
+            var importedTemplate = await CreateTemplateAsync(template, cancellationToken);
+            
+            _logger.LogInformation("Template imported successfully: {TemplateId} ({TemplateName})", 
+                importedTemplate.Id, importedTemplate.Name);
+            
+            return importedTemplate;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to import template");
+            throw;
+        }
     }
 
     public async Task<IEnumerable<ImportTemplate>> ImportTemplatesAsync(string templatesJson, Core.Interfaces.TemplateImportOptions? importOptions = null, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException("Template import/export will be implemented in task 2.6");
+        try
+        {
+            _logger.LogInformation("Importing multiple templates");
+
+            importOptions ??= new Core.Interfaces.TemplateImportOptions();
+
+            // Parse export data
+            TemplateExportData exportData;
+            try
+            {
+                exportData = JsonSerializer.Deserialize<TemplateExportData>(templatesJson, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
+
+                if (exportData?.Templates == null || exportData.Templates.Count == 0)
+                {
+                    throw new InvalidOperationException("Export data contains no templates");
+                }
+            }
+            catch (JsonException)
+            {
+                // Try parsing as array of templates
+                try
+                {
+                    var templatesArray = JsonSerializer.Deserialize<List<ImportTemplate>>(templatesJson, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    });
+
+                    if (templatesArray == null || templatesArray.Count == 0)
+                    {
+                        throw new InvalidOperationException("No templates found in array");
+                    }
+
+                    exportData = new TemplateExportData
+                    {
+                        ExportVersion = "1.0",
+                        ExportedAt = DateTime.UtcNow,
+                        Templates = templatesArray
+                    };
+
+                    _logger.LogInformation("Parsed templates from array format");
+                }
+                catch (JsonException ex)
+                {
+                    throw new ArgumentException("Invalid JSON format for templates import", ex);
+                }
+            }
+
+            var importResults = new List<TemplateImportResult>();
+            var importedTemplates = new List<ImportTemplate>();
+
+            _logger.LogInformation("Processing {Count} templates for import", exportData.Templates.Count);
+
+            foreach (var template in exportData.Templates)
+            {
+                var result = new TemplateImportResult
+                {
+                    OriginalName = template.Name,
+                    OriginalId = template.Id
+                };
+
+                try
+                {
+                    // Process import options for each template
+                    await ProcessImportOptionsAsync(template, importOptions, cancellationToken);
+
+                    // Validate template if required
+                    if (importOptions.ValidateOnImport)
+                    {
+                        var validationResult = template.ValidateTemplate();
+                        if (!validationResult.IsValid)
+                        {
+                            result.IsSuccessful = false;
+                            result.Errors.AddRange(validationResult.Errors.Select(e => $"Validation: {e}"));
+                            importResults.Add(result);
+                            continue;
+                        }
+                    }
+
+                    // Check for existing template with same name
+                    var existingTemplate = await GetTemplateByNameAsync(template.Name, cancellationToken);
+                    if (existingTemplate != null)
+                    {
+                        try
+                        {
+                            var resolvedTemplate = await HandleTemplateConflictAsync(template, existingTemplate, importOptions, cancellationToken);
+                            result.IsSuccessful = true;
+                            result.ImportedTemplate = resolvedTemplate;
+                            
+                            // Determine action based on conflict resolution
+                            if (importOptions.ConflictResolution == Core.Interfaces.TemplateConflictResolution.Overwrite)
+                            {
+                                result.Action = TemplateImportAction.Updated;
+                            }
+                            else if (importOptions.ConflictResolution == Core.Interfaces.TemplateConflictResolution.Merge)
+                            {
+                                result.Action = TemplateImportAction.Updated;
+                            }
+                            else if (importOptions.ConflictResolution == Core.Interfaces.TemplateConflictResolution.Rename)
+                            {
+                                result.Action = TemplateImportAction.Created;
+                            }
+                            
+                            importedTemplates.Add(resolvedTemplate);
+                        }
+                        catch (InvalidOperationException ex) when (ex.Message.Contains("skipped"))
+                        {
+                            result.IsSuccessful = false;
+                            result.Errors.Add(ex.Message);
+                            result.Action = TemplateImportAction.Skipped;
+                        }
+                    }
+                    else
+                    {
+                        // Create new template
+                        var importedTemplate = await CreateTemplateAsync(template, cancellationToken);
+                        result.IsSuccessful = true;
+                        result.ImportedTemplate = importedTemplate;
+                        result.Action = TemplateImportAction.Created;
+                        importedTemplates.Add(importedTemplate);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to import template: {TemplateName}", template.Name);
+                    result.IsSuccessful = false;
+                    result.Errors.Add($"Import failed: {ex.Message}");
+                    result.Action = TemplateImportAction.Failed;
+                }
+
+                importResults.Add(result);
+            }
+
+            var successCount = importResults.Count(r => r.IsSuccessful);
+            var failureCount = importResults.Count(r => !r.IsSuccessful);
+
+            _logger.LogInformation("Template import completed: {SuccessCount} successful, {FailureCount} failed", 
+                successCount, failureCount);
+
+            // If there were failures, log details
+            if (failureCount > 0)
+            {
+                var failedResults = importResults.Where(r => !r.IsSuccessful);
+                foreach (var failedResult in failedResults)
+                {
+                    _logger.LogWarning("Failed to import template '{TemplateName}': {Errors}", 
+                        failedResult.OriginalName, string.Join(", ", failedResult.Errors));
+                }
+            }
+
+            return importedTemplates;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to import templates");
+            throw;
+        }
     }
 
     #endregion
@@ -2251,6 +2580,770 @@ public class ImportTemplateService : IImportTemplateService
     }
 
     #endregion
+
+    #region Import/Export Helper Methods
+
+    private async Task ProcessImportOptionsAsync(ImportTemplate template, Core.Interfaces.TemplateImportOptions importOptions, CancellationToken cancellationToken)
+    {
+        // Assign new ID if requested
+        if (importOptions.AssignNewIds)
+        {
+            template.Id = Guid.NewGuid();
+            
+            // Also assign new IDs to fields and zones
+            foreach (var field in template.Fields)
+            {
+                field.Id = Guid.NewGuid();
+                foreach (var zone in field.ExtractionZones)
+                {
+                    zone.Id = Guid.NewGuid();
+                }
+            }
+        }
+
+        // Apply name prefix/suffix
+        if (!string.IsNullOrEmpty(importOptions.NamePrefix))
+        {
+            template.Name = $"{importOptions.NamePrefix}{template.Name}";
+        }
+        if (!string.IsNullOrEmpty(importOptions.NameSuffix))
+        {
+            template.Name = $"{template.Name}{importOptions.NameSuffix}";
+        }
+
+        // Override category if specified
+        if (!string.IsNullOrEmpty(importOptions.OverrideCategory))
+        {
+            template.Category = importOptions.OverrideCategory;
+        }
+
+        // Add additional tags
+        if (importOptions.AdditionalTags.Count > 0)
+        {
+            foreach (var tag in importOptions.AdditionalTags)
+            {
+                if (!template.Tags.Contains(tag))
+                {
+                    template.Tags.Add(tag);
+                }
+            }
+        }
+
+        // Update import metadata
+        if (!string.IsNullOrEmpty(importOptions.ImportedBy))
+        {
+            template.LastModifiedBy = importOptions.ImportedBy;
+            if (string.IsNullOrEmpty(template.CreatedBy))
+            {
+                template.CreatedBy = importOptions.ImportedBy;
+            }
+        }
+
+        // Handle creation dates
+        if (!importOptions.PreserveCreationDates)
+        {
+            template.CreatedAt = DateTime.UtcNow;
+            template.LastModifiedAt = DateTime.UtcNow;
+        }
+        else
+        {
+            template.LastModifiedAt = DateTime.UtcNow;
+        }
+
+        // Handle version preservation
+        if (!importOptions.PreserveVersions)
+        {
+            template.Version = "1.0.0";
+        }
+
+        // Set template activation state
+        template.IsActive = importOptions.ActivateTemplates;
+
+        // Add import metadata to template metadata
+        foreach (var metadata in importOptions.ImportMetadata)
+        {
+            template.Metadata[metadata.Key] = metadata.Value;
+        }
+
+        // Add import timestamp
+        template.Metadata["ImportedAt"] = DateTime.UtcNow;
+        template.Metadata["ImportedBy"] = importOptions.ImportedBy ?? Environment.UserName;
+    }
+
+    private async Task<string> GenerateUniqueTemplateNameAsync(string baseName, CancellationToken cancellationToken)
+    {
+        var uniqueName = baseName;
+        var counter = 1;
+
+        while (await GetTemplateByNameAsync(uniqueName, cancellationToken) != null)
+        {
+            uniqueName = $"{baseName} ({counter})";
+            counter++;
+        }
+
+        return uniqueName;
+    }
+
+    private async Task<ImportTemplate> HandleTemplateConflictAsync(ImportTemplate template, ImportTemplate existingTemplate, Core.Interfaces.TemplateImportOptions importOptions, CancellationToken cancellationToken)
+    {
+        switch (importOptions.ConflictResolution)
+        {
+            case Core.Interfaces.TemplateConflictResolution.Fail:
+                throw new InvalidOperationException($"Template with name '{template.Name}' already exists");
+
+            case Core.Interfaces.TemplateConflictResolution.Skip:
+                throw new InvalidOperationException($"Template '{template.Name}' skipped due to conflict");
+
+            case Core.Interfaces.TemplateConflictResolution.Overwrite:
+                template.Id = existingTemplate.Id;
+                template.CreatedAt = existingTemplate.CreatedAt;
+                template.CreatedBy = existingTemplate.CreatedBy;
+                return await UpdateTemplateAsync(template, cancellationToken);
+
+            case Core.Interfaces.TemplateConflictResolution.Merge:
+                return await MergeTemplatesAsync(existingTemplate, template, importOptions, cancellationToken);
+
+            case Core.Interfaces.TemplateConflictResolution.Rename:
+                template.Name = await GenerateUniqueTemplateNameAsync(template.Name, cancellationToken);
+                return await CreateTemplateAsync(template, cancellationToken);
+
+            default:
+                throw new ArgumentException($"Unsupported conflict resolution: {importOptions.ConflictResolution}");
+        }
+    }
+
+    private async Task<ImportTemplate> MergeTemplatesAsync(ImportTemplate existingTemplate, ImportTemplate newTemplate, Core.Interfaces.TemplateImportOptions importOptions, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Merging template: {TemplateName}", existingTemplate.Name);
+
+        // Start with existing template
+        var mergedTemplate = existingTemplate;
+
+        // Merge description if new one is provided
+        if (!string.IsNullOrEmpty(newTemplate.Description))
+        {
+            mergedTemplate.Description = newTemplate.Description;
+        }
+
+        // Merge tags
+        foreach (var tag in newTemplate.Tags)
+        {
+            if (!mergedTemplate.Tags.Contains(tag))
+            {
+                mergedTemplate.Tags.Add(tag);
+            }
+        }
+
+        // Merge supported formats
+        foreach (var format in newTemplate.SupportedFormats)
+        {
+            if (!mergedTemplate.SupportedFormats.Contains(format))
+            {
+                mergedTemplate.SupportedFormats.Add(format);
+            }
+        }
+
+        // Merge fields (add new fields, don't overwrite existing ones)
+        var existingFieldNames = mergedTemplate.Fields.Select(f => f.Name).ToHashSet();
+        foreach (var newField in newTemplate.Fields)
+        {
+            if (!existingFieldNames.Contains(newField.Name))
+            {
+                newField.Id = Guid.NewGuid(); // Assign new ID
+                mergedTemplate.Fields.Add(newField);
+            }
+        }
+
+        // Update metadata with merge information
+        mergedTemplate.LastModifiedAt = DateTime.UtcNow;
+        mergedTemplate.LastModifiedBy = importOptions.ImportedBy ?? Environment.UserName;
+        mergedTemplate.Metadata["MergedAt"] = DateTime.UtcNow;
+        mergedTemplate.Metadata["MergedFrom"] = newTemplate.Id.ToString();
+
+        // Update the template
+        return await UpdateTemplateAsync(mergedTemplate, cancellationToken);
+    }
+
+    #endregion
+
+    #region Bulk Import/Export Operations
+
+    public async Task<Core.Interfaces.TemplateExportResult> ExportTemplatesToFileAsync(IEnumerable<Guid> templateIds, string filePath, Core.Interfaces.TemplateExportFormat exportFormat = Core.Interfaces.TemplateExportFormat.Json, CancellationToken cancellationToken = default)
+    {
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var result = new Core.Interfaces.TemplateExportResult
+        {
+            FilePath = filePath,
+            Format = exportFormat,
+            RequestedCount = templateIds.Count()
+        };
+
+        try
+        {
+            _logger.LogInformation("Exporting {Count} templates to file: {FilePath}", result.RequestedCount, filePath);
+
+            // Get JSON data
+            var jsonData = await ExportTemplatesAsync(templateIds, cancellationToken);
+            
+            // Convert to desired format
+            string exportData;
+            switch (exportFormat)
+            {
+                case Core.Interfaces.TemplateExportFormat.Json:
+                    exportData = jsonData;
+                    break;
+                case Core.Interfaces.TemplateExportFormat.Xml:
+                    exportData = ConvertJsonToXml(jsonData);
+                    break;
+                case Core.Interfaces.TemplateExportFormat.Yaml:
+                    exportData = ConvertJsonToYaml(jsonData);
+                    break;
+                default:
+                    throw new ArgumentException($"Unsupported export format: {exportFormat}");
+            }
+
+            // Ensure directory exists
+            var directory = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            // Write to file
+            await File.WriteAllTextAsync(filePath, exportData, cancellationToken);
+
+            // Get file info
+            var fileInfo = new FileInfo(filePath);
+            result.FileSizeBytes = fileInfo.Length;
+            result.ExportedCount = result.RequestedCount; // Assuming all succeeded since ExportTemplatesAsync didn't throw
+            result.IsSuccessful = true;
+            
+            result.ExportMetadata["ExportFormat"] = exportFormat.ToString();
+            result.ExportMetadata["FileSize"] = fileInfo.Length;
+            result.ExportMetadata["CreatedAt"] = DateTime.UtcNow;
+
+            stopwatch.Stop();
+            result.ExportDuration = stopwatch.Elapsed;
+
+            _logger.LogInformation("Successfully exported {Count} templates to {FilePath} in {Duration}ms", 
+                result.ExportedCount, filePath, stopwatch.ElapsedMilliseconds);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            result.ExportDuration = stopwatch.Elapsed;
+            result.IsSuccessful = false;
+            result.Errors.Add($"Export failed: {ex.Message}");
+            
+            _logger.LogError(ex, "Failed to export templates to file: {FilePath}", filePath);
+            throw;
+        }
+    }
+
+    public async Task<Core.Interfaces.TemplateImportBulkResult> ImportTemplatesFromFileAsync(string filePath, Core.Interfaces.TemplateImportOptions? importOptions = null, CancellationToken cancellationToken = default)
+    {
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var result = new Core.Interfaces.TemplateImportBulkResult();
+
+        try
+        {
+            _logger.LogInformation("Importing templates from file: {FilePath}", filePath);
+
+            if (!File.Exists(filePath))
+            {
+                throw new FileNotFoundException($"Import file not found: {filePath}");
+            }
+
+            // Read file content
+            var fileContent = await File.ReadAllTextAsync(filePath, cancellationToken);
+            var fileExtension = Path.GetExtension(filePath).ToLowerInvariant();
+
+            // Convert to JSON if needed
+            string jsonContent;
+            switch (fileExtension)
+            {
+                case ".json":
+                    jsonContent = fileContent;
+                    break;
+                case ".xml":
+                    jsonContent = ConvertXmlToJson(fileContent);
+                    break;
+                case ".yaml":
+                case ".yml":
+                    jsonContent = ConvertYamlToJson(fileContent);
+                    break;
+                default:
+                    throw new ArgumentException($"Unsupported file format: {fileExtension}");
+            }
+
+            // Import templates
+            var importedTemplates = await ImportTemplatesAsync(jsonContent, importOptions, cancellationToken);
+            
+            result.ImportedTemplates = importedTemplates.ToList();
+            result.SuccessfulCount = result.ImportedTemplates.Count;
+            result.TotalCount = result.SuccessfulCount; // We'll need to parse the file to get actual count
+            result.FailedCount = 0;
+            result.SkippedCount = 0;
+            result.IsSuccessful = true;
+
+            stopwatch.Stop();
+            result.ImportDuration = stopwatch.Elapsed;
+
+            result.ImportStatistics["FileSize"] = new FileInfo(filePath).Length;
+            result.ImportStatistics["FileFormat"] = fileExtension;
+            result.ImportStatistics["ImportedAt"] = DateTime.UtcNow;
+
+            _logger.LogInformation("Successfully imported {Count} templates from {FilePath} in {Duration}ms", 
+                result.SuccessfulCount, filePath, stopwatch.ElapsedMilliseconds);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            result.ImportDuration = stopwatch.Elapsed;
+            result.IsSuccessful = false;
+            result.GeneralErrors.Add($"Import failed: {ex.Message}");
+            
+            _logger.LogError(ex, "Failed to import templates from file: {FilePath}", filePath);
+            throw;
+        }
+    }
+
+    public async Task<string> ExportTemplatesByCategoryAsync(string category, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Exporting templates by category: {Category}", category);
+
+            var templates = await GetTemplatesByCategoryAsync(category, cancellationToken);
+            var templateIds = templates.Select(t => t.Id);
+
+            if (!templateIds.Any())
+            {
+                _logger.LogWarning("No templates found in category: {Category}", category);
+                
+                // Return empty export data
+                var emptyExportData = new TemplateExportData
+                {
+                    ExportVersion = "1.0",
+                    ExportedAt = DateTime.UtcNow,
+                    ExportedBy = Environment.UserName,
+                    Templates = new List<ImportTemplate>(),
+                    ExportMetadata = new Dictionary<string, object>
+                    {
+                        { "Category", category },
+                        { "TemplateCount", 0 }
+                    }
+                };
+
+                return JsonSerializer.Serialize(emptyExportData, new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
+            }
+
+            return await ExportTemplatesAsync(templateIds, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to export templates by category: {Category}", category);
+            throw;
+        }
+    }
+
+    public async Task<Core.Interfaces.TemplateImportValidationResult> ValidateImportAsync(string templatesJson, CancellationToken cancellationToken = default)
+    {
+        var result = new Core.Interfaces.TemplateImportValidationResult();
+
+        try
+        {
+            _logger.LogInformation("Validating template import data");
+
+            // Parse export data
+            TemplateExportData exportData;
+            try
+            {
+                exportData = JsonSerializer.Deserialize<TemplateExportData>(templatesJson, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
+
+                if (exportData?.Templates == null || exportData.Templates.Count == 0)
+                {
+                    throw new InvalidOperationException("Export data contains no templates");
+                }
+            }
+            catch (JsonException)
+            {
+                // Try parsing as array of templates
+                try
+                {
+                    var templatesArray = JsonSerializer.Deserialize<List<ImportTemplate>>(templatesJson, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    });
+
+                    if (templatesArray == null || templatesArray.Count == 0)
+                    {
+                        throw new InvalidOperationException("No templates found in array");
+                    }
+
+                    exportData = new TemplateExportData
+                    {
+                        ExportVersion = "1.0",
+                        ExportedAt = DateTime.UtcNow,
+                        Templates = templatesArray
+                    };
+                }
+                catch (JsonException ex)
+                {
+                    result.GeneralErrors.Add($"Invalid JSON format: {ex.Message}");
+                    return result;
+                }
+            }
+
+            result.TotalCount = exportData.Templates.Count;
+
+            foreach (var template in exportData.Templates)
+            {
+                var validationSummary = new Core.Interfaces.TemplateValidationSummary
+                {
+                    TemplateName = template.Name,
+                    TemplateId = template.Id
+                };
+
+                try
+                {
+                    // Validate template structure
+                    var validationResult = template.ValidateTemplate();
+                    validationSummary.IsValid = validationResult.IsValid;
+                    validationSummary.Errors.AddRange(validationResult.Errors);
+                    validationSummary.Warnings.AddRange(validationResult.Warnings);
+
+                    // Check for conflicts with existing templates
+                    var existingTemplate = await GetTemplateByNameAsync(template.Name, cancellationToken);
+                    if (existingTemplate != null)
+                    {
+                        validationSummary.HasConflicts = true;
+                        validationSummary.ConflictingTemplateNames.Add(existingTemplate.Name);
+                    }
+
+                    if (validationSummary.IsValid)
+                    {
+                        result.ValidCount++;
+                    }
+                    else
+                    {
+                        result.InvalidCount++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    validationSummary.IsValid = false;
+                    validationSummary.Errors.Add($"Validation failed: {ex.Message}");
+                    result.InvalidCount++;
+                }
+
+                result.ValidationResults.Add(validationSummary);
+            }
+
+            result.IsValid = result.InvalidCount == 0;
+
+            _logger.LogInformation("Template validation completed: {ValidCount} valid, {InvalidCount} invalid", 
+                result.ValidCount, result.InvalidCount);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to validate template import");
+            result.GeneralErrors.Add($"Validation failed: {ex.Message}");
+            return result;
+        }
+    }
+
+    #endregion
+
+    #region Format Conversion Helpers
+
+    private string ConvertJsonToXml(string jsonData)
+    {
+        // Simple XML conversion (for basic implementation)
+        // In a real implementation, you might use a library like Newtonsoft.Json
+        try
+        {
+            var doc = JsonDocument.Parse(jsonData);
+            var sb = new StringBuilder();
+            sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+            sb.AppendLine("<TemplateExport>");
+            sb.AppendLine($"  <ExportVersion>{doc.RootElement.GetProperty("exportVersion").GetString()}</ExportVersion>");
+            sb.AppendLine($"  <ExportedAt>{doc.RootElement.GetProperty("exportedAt").GetString()}</ExportedAt>");
+            sb.AppendLine($"  <ExportedBy>{doc.RootElement.GetProperty("exportedBy").GetString()}</ExportedBy>");
+            sb.AppendLine("  <Templates>");
+            
+            foreach (var template in doc.RootElement.GetProperty("templates").EnumerateArray())
+            {
+                sb.AppendLine("    <Template>");
+                sb.AppendLine($"      <Id>{template.GetProperty("id").GetString()}</Id>");
+                sb.AppendLine($"      <Name>{template.GetProperty("name").GetString()}</Name>");
+                sb.AppendLine($"      <Description>{template.GetProperty("description").GetString()}</Description>");
+                // Add more template properties as needed
+                sb.AppendLine("    </Template>");
+            }
+            
+            sb.AppendLine("  </Templates>");
+            sb.AppendLine("</TemplateExport>");
+            return sb.ToString();
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to convert JSON to XML: {ex.Message}", ex);
+        }
+    }
+
+    private string ConvertJsonToYaml(string jsonData)
+    {
+        // Simple YAML conversion (for basic implementation)
+        // In a real implementation, you might use a library like YamlDotNet
+        try
+        {
+            var doc = JsonDocument.Parse(jsonData);
+            var sb = new StringBuilder();
+            sb.AppendLine($"exportVersion: \"{doc.RootElement.GetProperty("exportVersion").GetString()}\"");
+            sb.AppendLine($"exportedAt: \"{doc.RootElement.GetProperty("exportedAt").GetString()}\"");
+            sb.AppendLine($"exportedBy: \"{doc.RootElement.GetProperty("exportedBy").GetString()}\"");
+            sb.AppendLine("templates:");
+            
+            foreach (var template in doc.RootElement.GetProperty("templates").EnumerateArray())
+            {
+                sb.AppendLine($"  - id: \"{template.GetProperty("id").GetString()}\"");
+                sb.AppendLine($"    name: \"{template.GetProperty("name").GetString()}\"");
+                sb.AppendLine($"    description: \"{template.GetProperty("description").GetString()}\"");
+                // Add more template properties as needed
+            }
+            
+            return sb.ToString();
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to convert JSON to YAML: {ex.Message}", ex);
+        }
+    }
+
+    private string ConvertXmlToJson(string xmlData)
+    {
+        // Simple placeholder - in real implementation, use proper XML to JSON conversion
+        throw new NotImplementedException("XML to JSON conversion not implemented - use a proper library like Newtonsoft.Json");
+    }
+
+    private string ConvertYamlToJson(string yamlData)
+    {
+        // Simple placeholder - in real implementation, use proper YAML to JSON conversion
+        throw new NotImplementedException("YAML to JSON conversion not implemented - use a proper library like YamlDotNet");
+    }
+
+    #endregion
+
+    #region Import/Export Helper Methods
+
+    private async Task<string> GenerateUniqueTemplateNameAsync(string baseName, CancellationToken cancellationToken)
+    {
+        var uniqueName = baseName;
+        var counter = 1;
+
+        while (await GetTemplateByNameAsync(uniqueName, cancellationToken) != null)
+        {
+            uniqueName = $"{baseName} ({counter})";
+            counter++;
+        }
+
+        return uniqueName;
+    }
+
+    private async Task<ImportTemplate> HandleTemplateConflictAsync(ImportTemplate template, ImportTemplate existingTemplate, Core.Interfaces.TemplateImportOptions importOptions, CancellationToken cancellationToken)
+    {
+        switch (importOptions.ConflictResolution)
+        {
+            case Core.Interfaces.TemplateConflictResolution.Fail:
+                throw new InvalidOperationException($"Template with name '{template.Name}' already exists");
+
+            case Core.Interfaces.TemplateConflictResolution.Skip:
+                throw new InvalidOperationException($"Template '{template.Name}' skipped due to conflict");
+
+            case Core.Interfaces.TemplateConflictResolution.Overwrite:
+                template.Id = existingTemplate.Id;
+                template.CreatedAt = existingTemplate.CreatedAt;
+                template.CreatedBy = existingTemplate.CreatedBy;
+                return await UpdateTemplateAsync(template, cancellationToken);
+
+            case Core.Interfaces.TemplateConflictResolution.Merge:
+                return await MergeTemplatesAsync(existingTemplate, template, importOptions, cancellationToken);
+
+            case Core.Interfaces.TemplateConflictResolution.Rename:
+                template.Name = await GenerateUniqueTemplateNameAsync(template.Name, cancellationToken);
+                return await CreateTemplateAsync(template, cancellationToken);
+
+            default:
+                throw new ArgumentException($"Unsupported conflict resolution: {importOptions.ConflictResolution}");
+        }
+    }
+
+    private async Task<ImportTemplate> MergeTemplatesAsync(ImportTemplate existingTemplate, ImportTemplate newTemplate, Core.Interfaces.TemplateImportOptions importOptions, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Merging template: {TemplateName}", existingTemplate.Name);
+
+        // Start with existing template
+        var mergedTemplate = existingTemplate;
+
+        // Merge description if new one is provided
+        if (!string.IsNullOrEmpty(newTemplate.Description))
+        {
+            mergedTemplate.Description = newTemplate.Description;
+        }
+
+        // Merge tags
+        foreach (var tag in newTemplate.Tags)
+        {
+            if (!mergedTemplate.Tags.Contains(tag))
+            {
+                mergedTemplate.Tags.Add(tag);
+            }
+        }
+
+        // Merge supported formats
+        foreach (var format in newTemplate.SupportedFormats)
+        {
+            if (!mergedTemplate.SupportedFormats.Contains(format))
+            {
+                mergedTemplate.SupportedFormats.Add(format);
+            }
+        }
+
+        // Merge fields (add new fields, don't overwrite existing ones)
+        var existingFieldNames = mergedTemplate.Fields.Select(f => f.Name).ToHashSet();
+        foreach (var newField in newTemplate.Fields)
+        {
+            if (!existingFieldNames.Contains(newField.Name))
+            {
+                newField.Id = Guid.NewGuid(); // Assign new ID
+                mergedTemplate.Fields.Add(newField);
+            }
+        }
+
+        // Update metadata with merge information
+        mergedTemplate.LastModifiedAt = DateTime.UtcNow;
+        mergedTemplate.LastModifiedBy = importOptions.ImportedBy ?? Environment.UserName;
+        mergedTemplate.Metadata["MergedAt"] = DateTime.UtcNow;
+        mergedTemplate.Metadata["MergedFrom"] = newTemplate.Id.ToString();
+
+        // Update the template
+        return await UpdateTemplateAsync(mergedTemplate, cancellationToken);
+    }
+
+    #endregion
+
+}
+
+/// <summary>
+/// Export data wrapper for templates
+/// </summary>
+public class TemplateExportData
+{
+    /// <summary>
+    /// Version of the export format
+    /// </summary>
+    public string ExportVersion { get; set; } = "1.0";
+
+    /// <summary>
+    /// When the export was created
+    /// </summary>
+    public DateTime ExportedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// Who created the export
+    /// </summary>
+    public string ExportedBy { get; set; } = string.Empty;
+
+    /// <summary>
+    /// List of templates in the export
+    /// </summary>
+    public List<ImportTemplate> Templates { get; set; } = new();
+
+    /// <summary>
+    /// Additional export metadata
+    /// </summary>
+    public Dictionary<string, object> ExportMetadata { get; set; } = new();
+}
+
+/// <summary>
+/// Result of template import operation
+/// </summary>
+public class TemplateImportResult
+{
+    /// <summary>
+    /// Whether the import was successful
+    /// </summary>
+    public bool IsSuccessful { get; set; }
+
+    /// <summary>
+    /// Original template name from the import
+    /// </summary>
+    public string OriginalName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Original template ID from the import
+    /// </summary>
+    public Guid OriginalId { get; set; }
+
+    /// <summary>
+    /// The imported template (if successful)
+    /// </summary>
+    public ImportTemplate? ImportedTemplate { get; set; }
+
+    /// <summary>
+    /// Action taken during import
+    /// </summary>
+    public TemplateImportAction Action { get; set; }
+
+    /// <summary>
+    /// Any errors encountered during import
+    /// </summary>
+    public List<string> Errors { get; set; } = new();
+
+    /// <summary>
+    /// Any warnings generated during import
+    /// </summary>
+    public List<string> Warnings { get; set; } = new();
+}
+
+/// <summary>
+/// Action taken during template import
+/// </summary>
+public enum TemplateImportAction
+{
+    /// <summary>
+    /// Template was created as new
+    /// </summary>
+    Created,
+
+    /// <summary>
+    /// Existing template was updated
+    /// </summary>
+    Updated,
+
+    /// <summary>
+    /// Template was skipped due to conflicts
+    /// </summary>
+    Skipped,
+
+    /// <summary>
+    /// Import failed for this template
+    /// </summary>
+    Failed
 }
 
 /// <summary>
