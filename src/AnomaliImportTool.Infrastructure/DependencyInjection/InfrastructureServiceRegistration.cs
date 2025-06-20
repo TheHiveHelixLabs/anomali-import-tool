@@ -72,6 +72,7 @@ namespace AnomaliImportTool.Infrastructure.DependencyInjection
             services.AddSingleton<TemplateDatabaseService>();
             services.AddTransient<TemplateSerializationService>();
             services.AddScoped<IImportTemplateService, ImportTemplateService>();
+            services.AddScoped<ITemplateMatchingService, TemplateMatchingService>();
             
             // Register file processing services
             services.AddTransient<FileSecurityValidator>();

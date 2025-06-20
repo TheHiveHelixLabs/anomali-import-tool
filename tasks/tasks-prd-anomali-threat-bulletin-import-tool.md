@@ -78,7 +78,7 @@ The Anomali Threat Bulletin Import Tool is a **standalone, zero-installation** c
 
 - [ ] **2.0 Template Management Infrastructure**
   - [x] 2.1 Implement ImportTemplateService with full CRUD operations, categorization, and search capabilities (FR-15)
-  - [ ] 2.2 Implement TemplateMatchingService with document fingerprinting and confidence scoring algorithms (FR-16)
+  - [x] 2.2 Implement TemplateMatchingService with document fingerprinting and confidence scoring algorithms (FR-16)
   - [ ] 2.3 Create TemplateExtractionEngine for field extraction using regex, keyword matching, and coordinate zones (FR-13, FR-14)
   - [ ] 2.4 Implement template versioning system with rollback capabilities and change tracking (FR-15)
   - [ ] 2.5 Create template inheritance system for parent-child relationships and overrides (FR-15)
