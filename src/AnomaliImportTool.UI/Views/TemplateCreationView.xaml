@@ -23,6 +23,9 @@
 
         <!-- Right panel for field configuration and actions -->
         <StackPanel Grid.Column="1" Margin="10" Orientation="Vertical" >
+            <TextBlock Text="Template Name" FontWeight="Bold" Margin="0,0,0,5" />
+            <TextBox Text="{Binding TemplateName, Mode=TwoWay}" Margin="0,0,0,10" />
+
             <TextBlock Text="Template Fields" FontWeight="Bold" FontSize="16" Margin="0,0,0,10" />
             <ListView ItemsSource="{Binding Fields}" SelectedItem="{Binding SelectedField, Mode=TwoWay}">
                 <ListView.ItemTemplate>
@@ -40,6 +43,16 @@
             <Separator Margin="0,10" />
 
             <Button Content="Save Template" Command="{Binding SaveTemplateCommand}" Height="40" />
+            <Button Content="Validate" Command="{Binding ValidateTemplateCommand}" Margin="0,5,0,0" />
+
+            <!-- Validation errors -->
+            <ItemsControl ItemsSource="{Binding ValidationErrors}" Margin="0,10,0,0">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="• {Binding}" Foreground="Red" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
 
             <!-- Preview extraction results -->
             <controls:TemplatePreview Margin="0,10,0,0" />

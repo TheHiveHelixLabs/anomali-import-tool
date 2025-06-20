@@ -91,7 +91,7 @@ The Anomali Threat Bulletin Import Tool is a **standalone, zero-installation** c
   - [x] 3.1 Create TemplateCreationView with visual document preview and zone selection capabilities (FR-13)
   - [x] 3.2 Implement ExtractionZoneEditor control for coordinate-based region selection with mouse/touch support (FR-13)
   - [x] 3.3 Create TemplatePreview control showing live extraction results during template creation (FR-17)
-  - [ ] 3.4 Implement TemplateCreationViewModel with field configuration, validation rules, and transformation logic (FR-13)
+  - [x] 3.4 Implement TemplateCreationViewModel with field configuration, validation rules, and transformation logic (FR-13)
   - [ ] 3.5 Create template testing interface with sample document validation and confidence indicators (FR-17)
   - [ ] 3.6 Implement conditional extraction logic editor for document content-based rules (FR-18)
   - [ ] 3.7 Add multi-page document handling with page-specific extraction rule configuration (FR-18)

@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using AnomaliImportTool.Core.Models;
 using AnomaliImportTool.WPF.Commands;
+using System.Linq;
 
 namespace AnomaliImportTool.WPF.ViewModels;
 
@@ -12,6 +13,7 @@ public class TemplateCreationViewModel : INotifyPropertyChanged
 {
     private BitmapImage? _previewImage;
     private TemplateField? _selectedField;
+    private string _templateName = string.Empty;
 
     public BitmapImage? PreviewImage
     {
@@ -25,21 +27,31 @@ public class TemplateCreationViewModel : INotifyPropertyChanged
 
     public ObservableCollection<FieldExtractionPreview> PreviewResults { get; } = new();
 
+    public ObservableCollection<string> ValidationErrors { get; } = new();
+
     public TemplateField? SelectedField
     {
         get => _selectedField;
         set { _selectedField = value; OnPropertyChanged(); }
     }
 
+    public string TemplateName
+    {
+        get => _templateName;
+        set { _templateName = value; OnPropertyChanged(); }
+    }
+
     public ICommand AddFieldCommand { get; }
     public ICommand RemoveFieldCommand { get; }
     public ICommand SaveTemplateCommand { get; }
+    public ICommand ValidateTemplateCommand { get; }
 
     public TemplateCreationViewModel()
     {
         AddFieldCommand = new RelayCommand(_ => AddField());
         RemoveFieldCommand = new RelayCommand(_ => RemoveField(), _ => SelectedField != null);
         SaveTemplateCommand = new RelayCommand(_ => SaveTemplate());
+        ValidateTemplateCommand = new RelayCommand(_ => ValidateTemplate());
         // Populate PreviewResults with placeholder values
         PreviewResults.Add(new FieldExtractionPreview { FieldName = "SampleField", Value = "Value", Confidence = 0.85 });
     }
@@ -61,7 +73,38 @@ public class TemplateCreationViewModel : INotifyPropertyChanged
 
     private void SaveTemplate()
     {
-        // Placeholder for save logic (will connect to service later)
+        // For now, just validate and transform; integration with service later
+        if (!ValidateTemplate())
+            return;
+
+        // Build ImportTemplate object
+        var importTemplate = new ImportTemplate
+        {
+            Name = TemplateName,
+            Fields = Fields.ToList(),
+            SupportedFormats = new() { "pdf", "docx", "xlsx" }, // default placeholder
+        };
+
+        // TODO: Call template service to save
+    }
+
+    private bool ValidateTemplate()
+    {
+        ValidationErrors.Clear();
+        var template = new ImportTemplate
+        {
+            Name = TemplateName,
+            Fields = Fields.ToList(),
+            SupportedFormats = new() { "pdf" }
+        };
+
+        var result = template.ValidateTemplate();
+        if (!result.IsValid)
+        {
+            foreach (var error in result.Errors)
+                ValidationErrors.Add(error);
+        }
+        return result.IsValid;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
