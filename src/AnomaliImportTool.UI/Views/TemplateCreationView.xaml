@@ -1,0 +1,45 @@
+<UserControl x:Class="AnomaliImportTool.WPF.Views.TemplateCreationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:viewmodel="clr-namespace:AnomaliImportTool.WPF.ViewModels"
+             xmlns:controls="clr-namespace:AnomaliImportTool.WPF.Controls"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=viewmodel:TemplateCreationViewModel}"
+             d:DesignWidth="1000" d:DesignHeight="700">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="300"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Document Preview with zone overlay -->
+        <Grid x:Name="PreviewArea" Background="#FF1E1E1E" Margin="10">
+            <Image Source="{Binding PreviewImage}" Stretch="Uniform" />
+            <!-- Placeholder for ExtractionZoneEditor; to be implemented in Task 3.2 -->
+            <controls:ExtractionZoneEditor Zones="{Binding Zones}" />
+        </Grid>
+
+        <!-- Right panel for field configuration and actions -->
+        <StackPanel Grid.Column="1" Margin="10" Orientation="Vertical" >
+            <TextBlock Text="Template Fields" FontWeight="Bold" FontSize="16" Margin="0,0,0,10" />
+            <ListView ItemsSource="{Binding Fields}" SelectedItem="{Binding SelectedField, Mode=TwoWay}">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                <Button Content="Add Field" Command="{Binding AddFieldCommand}" Margin="0,0,5,0" />
+                <Button Content="Remove Field" Command="{Binding RemoveFieldCommand}" />
+            </StackPanel>
+
+            <Separator Margin="0,10" />
+
+            <Button Content="Save Template" Command="{Binding SaveTemplateCommand}" Height="40" />
+        </StackPanel>
+    </Grid>
+</UserControl> 
