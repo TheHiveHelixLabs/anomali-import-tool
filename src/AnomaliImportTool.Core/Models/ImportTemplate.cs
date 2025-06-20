@@ -127,6 +127,26 @@ public class ImportTemplate
     public int TemplatePriority { get; set; } = 0;
 
     /// <summary>
+    /// Parent template ID for inheritance (if any)
+    /// </summary>
+    public Guid? ParentTemplateId { get; set; }
+
+    /// <summary>
+    /// Inheritance configuration for this template
+    /// </summary>
+    public TemplateInheritanceConfig? InheritanceConfig { get; set; }
+
+    /// <summary>
+    /// Whether this template has been resolved with inheritance
+    /// </summary>
+    public bool IsInheritanceResolved { get; set; } = false;
+
+    /// <summary>
+    /// Tracks which properties were inherited vs overridden
+    /// </summary>
+    public Dictionary<string, InheritanceSource> InheritanceTracker { get; set; } = new();
+
+    /// <summary>
     /// Validates the template structure and rules
     /// </summary>
     /// <returns>Validation result with any errors</returns>
@@ -211,7 +231,11 @@ public class ImportTemplate
             ConfidenceThreshold = ConfidenceThreshold,
             AutoApply = AutoApply,
             AllowPartialMatches = AllowPartialMatches,
-            TemplatePriority = TemplatePriority
+            TemplatePriority = TemplatePriority,
+            ParentTemplateId = ParentTemplateId,
+            InheritanceConfig = InheritanceConfig,
+            IsInheritanceResolved = IsInheritanceResolved,
+            InheritanceTracker = new Dictionary<string, InheritanceSource>(InheritanceTracker)
         };
 
         return copy;
@@ -444,7 +468,7 @@ public enum ValidationErrorHandling
 }
 
 /// <summary>
-/// Template validation result
+/// Validation result for template structure and rules
 /// </summary>
 public class TemplateValidationResult
 {
@@ -469,7 +493,317 @@ public class TemplateValidationResult
     public Dictionary<string, object> ValidationMetadata { get; set; } = new();
 
     /// <summary>
-    /// List of placeholders used during template validation
+    /// List of placeholders used in the validation
     /// </summary>
     public List<string> UsedPlaceholders { get; set; } = new();
+}
+
+/// <summary>
+/// Configuration for template inheritance
+/// </summary>
+public class TemplateInheritanceConfig
+{
+    /// <summary>
+    /// Type of inheritance to apply
+    /// </summary>
+    public InheritanceType InheritanceType { get; set; } = InheritanceType.Full;
+
+    /// <summary>
+    /// Specific field names to inherit or override
+    /// </summary>
+    public Dictionary<string, FieldOverrideConfig> FieldOverrides { get; set; } = new();
+
+    /// <summary>
+    /// Settings to override from parent template
+    /// </summary>
+    public Dictionary<string, object> SettingsOverrides { get; set; } = new();
+
+    /// <summary>
+    /// Priority when multiple inheritance is allowed
+    /// </summary>
+    public int InheritancePriority { get; set; } = 0;
+
+    /// <summary>
+    /// Whether to allow adding new fields
+    /// </summary>
+    public bool AllowFieldAddition { get; set; } = true;
+
+    /// <summary>
+    /// Whether to allow removing inherited fields
+    /// </summary>
+    public bool AllowFieldRemoval { get; set; } = false;
+
+    /// <summary>
+    /// Whether to allow modifying inherited fields
+    /// </summary>
+    public bool AllowFieldModification { get; set; } = true;
+
+    /// <summary>
+    /// Whether to allow overriding parent settings
+    /// </summary>
+    public bool AllowSettingsOverride { get; set; } = true;
+
+    /// <summary>
+    /// Creates a copy of the inheritance configuration
+    /// </summary>
+    public TemplateInheritanceConfig CreateCopy()
+    {
+        return new TemplateInheritanceConfig
+        {
+            InheritanceType = InheritanceType,
+            FieldOverrides = new Dictionary<string, FieldOverrideConfig>(
+                FieldOverrides.ToDictionary(
+                    kvp => kvp.Key, 
+                    kvp => kvp.Value.CreateCopy()
+                )
+            ),
+            SettingsOverrides = new Dictionary<string, object>(SettingsOverrides),
+            InheritancePriority = InheritancePriority,
+            AllowFieldAddition = AllowFieldAddition,
+            AllowFieldRemoval = AllowFieldRemoval,
+            AllowFieldModification = AllowFieldModification,
+            AllowSettingsOverride = AllowSettingsOverride
+        };
+    }
+}
+
+/// <summary>
+/// Configuration for field-level overrides
+/// </summary>
+public class FieldOverrideConfig
+{
+    /// <summary>
+    /// Override action to take
+    /// </summary>
+    public FieldOverrideAction Action { get; set; } = FieldOverrideAction.Inherit;
+
+    /// <summary>
+    /// New field configuration if overriding
+    /// </summary>
+    public Dictionary<string, object> NewConfiguration { get; set; } = new();
+
+    /// <summary>
+    /// Properties to merge from parent and child
+    /// </summary>
+    public List<string> MergeProperties { get; set; } = new();
+
+    /// <summary>
+    /// Whether to preserve parent validation rules
+    /// </summary>
+    public bool PreserveValidation { get; set; } = true;
+
+    /// <summary>
+    /// Creates a copy of the field override configuration
+    /// </summary>
+    public FieldOverrideConfig CreateCopy()
+    {
+        return new FieldOverrideConfig
+        {
+            Action = Action,
+            NewConfiguration = new Dictionary<string, object>(NewConfiguration),
+            MergeProperties = new List<string>(MergeProperties),
+            PreserveValidation = PreserveValidation
+        };
+    }
+}
+
+/// <summary>
+/// Template inheritance relationship
+/// </summary>
+public class TemplateInheritanceRelationship
+{
+    /// <summary>
+    /// Unique identifier for the inheritance relationship
+    /// </summary>
+    public Guid Id { get; set; } = Guid.NewGuid();
+
+    /// <summary>
+    /// Child template ID
+    /// </summary>
+    public Guid ChildTemplateId { get; set; }
+
+    /// <summary>
+    /// Parent template ID
+    /// </summary>
+    public Guid ParentTemplateId { get; set; }
+
+    /// <summary>
+    /// Inheritance configuration
+    /// </summary>
+    public TemplateInheritanceConfig InheritanceConfig { get; set; } = new();
+
+    /// <summary>
+    /// Whether the inheritance relationship is active
+    /// </summary>
+    public bool IsActive { get; set; } = true;
+
+    /// <summary>
+    /// Validation status of the inheritance
+    /// </summary>
+    public InheritanceValidationStatus ValidationStatus { get; set; } = InheritanceValidationStatus.Valid;
+
+    /// <summary>
+    /// Validation message if there are issues
+    /// </summary>
+    public string? ValidationMessage { get; set; }
+
+    /// <summary>
+    /// When the relationship was created
+    /// </summary>
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// When the relationship was last updated
+    /// </summary>
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>
+/// Result of template inheritance resolution
+/// </summary>
+public class TemplateInheritanceResult
+{
+    /// <summary>
+    /// Whether inheritance was successful
+    /// </summary>
+    public bool IsSuccessful { get; set; } = false;
+
+    /// <summary>
+    /// The resolved template with inheritance applied
+    /// </summary>
+    public ImportTemplate? ResolvedTemplate { get; set; }
+
+    /// <summary>
+    /// Inheritance chain from root to current template
+    /// </summary>
+    public List<Guid> InheritanceChain { get; set; } = new();
+
+    /// <summary>
+    /// Properties that were inherited vs overridden
+    /// </summary>
+    public Dictionary<string, InheritanceSource> PropertySources { get; set; } = new();
+
+    /// <summary>
+    /// Fields that were inherited vs overridden
+    /// </summary>
+    public Dictionary<string, InheritanceSource> FieldSources { get; set; } = new();
+
+    /// <summary>
+    /// Any errors encountered during inheritance resolution
+    /// </summary>
+    public List<string> Errors { get; set; } = new();
+
+    /// <summary>
+    /// Warnings generated during inheritance resolution
+    /// </summary>
+    public List<string> Warnings { get; set; } = new();
+}
+
+/// <summary>
+/// Types of template inheritance
+/// </summary>
+public enum InheritanceType
+{
+    /// <summary>
+    /// Inherit all properties and fields, allowing overrides
+    /// </summary>
+    Full,
+
+    /// <summary>
+    /// Inherit only fields, not template settings
+    /// </summary>
+    FieldsOnly,
+
+    /// <summary>
+    /// Inherit only template settings, not fields
+    /// </summary>
+    SettingsOnly,
+
+    /// <summary>
+    /// Custom inheritance based on configuration
+    /// </summary>
+    Custom
+}
+
+/// <summary>
+/// Actions for field-level overrides
+/// </summary>
+public enum FieldOverrideAction
+{
+    /// <summary>
+    /// Inherit the field as-is from parent
+    /// </summary>
+    Inherit,
+
+    /// <summary>
+    /// Override the field completely
+    /// </summary>
+    Override,
+
+    /// <summary>
+    /// Merge field properties with parent
+    /// </summary>
+    Merge,
+
+    /// <summary>
+    /// Remove the field (don't inherit)
+    /// </summary>
+    Remove,
+
+    /// <summary>
+    /// Add a new field not in parent
+    /// </summary>
+    Add
+}
+
+/// <summary>
+/// Source of a property or field value
+/// </summary>
+public enum InheritanceSource
+{
+    /// <summary>
+    /// Value comes from the current template
+    /// </summary>
+    Current,
+
+    /// <summary>
+    /// Value is inherited from parent template
+    /// </summary>
+    Inherited,
+
+    /// <summary>
+    /// Value is merged from parent and current template
+    /// </summary>
+    Merged,
+
+    /// <summary>
+    /// Value is system default
+    /// </summary>
+    Default
+}
+
+/// <summary>
+/// Validation status for inheritance relationships
+/// </summary>
+public enum InheritanceValidationStatus
+{
+    /// <summary>
+    /// Inheritance is valid
+    /// </summary>
+    Valid,
+
+    /// <summary>
+    /// Inheritance has validation errors
+    /// </summary>
+    Invalid,
+
+    /// <summary>
+    /// Inheritance has warnings but is usable
+    /// </summary>
+    Warning,
+
+    /// <summary>
+    /// Inheritance status is unknown
+    /// </summary>
+    Unknown
 } 

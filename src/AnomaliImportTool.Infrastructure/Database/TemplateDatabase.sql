@@ -188,6 +188,50 @@ CREATE TABLE IF NOT EXISTS template_categories (
 );
 
 -- ============================================================================
+-- Template Inheritance Table
+-- Manages parent-child relationships between templates for inheritance
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS template_inheritance (
+    id TEXT PRIMARY KEY NOT NULL,
+    child_template_id TEXT NOT NULL,
+    parent_template_id TEXT NOT NULL,
+    
+    -- Inheritance configuration
+    inheritance_type TEXT NOT NULL DEFAULT 'Full', -- Full, FieldsOnly, SettingsOnly, Custom
+    field_overrides TEXT, -- JSON object defining which fields to override
+    settings_overrides TEXT, -- JSON object defining which settings to override
+    
+    -- Priority when multiple inheritance is allowed
+    inheritance_priority INTEGER NOT NULL DEFAULT 0,
+    
+    -- Override behaviors
+    allow_field_addition BOOLEAN NOT NULL DEFAULT 1,
+    allow_field_removal BOOLEAN NOT NULL DEFAULT 0,
+    allow_field_modification BOOLEAN NOT NULL DEFAULT 1,
+    allow_settings_override BOOLEAN NOT NULL DEFAULT 1,
+    
+    -- Inheritance status
+    is_active BOOLEAN NOT NULL DEFAULT 1,
+    validation_status TEXT NOT NULL DEFAULT 'Valid', -- Valid, Invalid, Warning, Unknown
+    validation_message TEXT,
+    
+    -- Timestamps
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Foreign key constraints
+    FOREIGN KEY (child_template_id) REFERENCES import_templates(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_template_id) REFERENCES import_templates(id) ON DELETE CASCADE,
+    
+    -- Constraints
+    CONSTRAINT chk_inheritance_priority CHECK (inheritance_priority >= 0),
+    CONSTRAINT chk_no_self_inheritance CHECK (child_template_id != parent_template_id),
+    
+    -- Unique constraint to prevent duplicate inheritance relationships
+    UNIQUE(child_template_id, parent_template_id)
+);
+
+-- ============================================================================
 -- Template Usage History Table
 -- Tracks template usage for analytics and optimization
 -- ============================================================================
@@ -366,6 +410,12 @@ CREATE INDEX IF NOT EXISTS idx_extraction_zones_priority ON extraction_zones(fie
 -- Template Categories Indexes
 CREATE INDEX IF NOT EXISTS idx_template_categories_parent ON template_categories(parent_category_id);
 CREATE INDEX IF NOT EXISTS idx_template_categories_order ON template_categories(display_order);
+
+-- Template Inheritance Indexes
+CREATE INDEX IF NOT EXISTS idx_template_inheritance_child ON template_inheritance(child_template_id);
+CREATE INDEX IF NOT EXISTS idx_template_inheritance_parent ON template_inheritance(parent_template_id);
+CREATE INDEX IF NOT EXISTS idx_template_inheritance_active ON template_inheritance(is_active);
+CREATE INDEX IF NOT EXISTS idx_template_inheritance_priority ON template_inheritance(child_template_id, inheritance_priority);
 
 -- Usage History Indexes
 CREATE INDEX IF NOT EXISTS idx_template_usage_template_id ON template_usage_history(template_id);

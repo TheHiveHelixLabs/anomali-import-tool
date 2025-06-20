@@ -1490,10 +1490,771 @@ public class ImportTemplateService : IImportTemplateService
     }
 
     #endregion
+
+    #region Template Inheritance Methods
+
+    public async Task<TemplateInheritanceRelationship> CreateInheritanceAsync(Guid childTemplateId, Guid parentTemplateId, TemplateInheritanceConfig inheritanceConfig)
+    {
+        try
+        {
+            _logger.LogInformation("Creating inheritance relationship: Child {ChildId} -> Parent {ParentId}", childTemplateId, parentTemplateId);
+
+            // Validate that the inheritance would not create a cycle
+            if (!await ValidateInheritanceAsync(childTemplateId, parentTemplateId))
+            {
+                throw new InvalidOperationException("Cannot create inheritance relationship: would create a cycle");
+            }
+
+            var relationship = new TemplateInheritanceRelationship
+            {
+                Id = Guid.NewGuid(),
+                ChildTemplateId = childTemplateId,
+                ParentTemplateId = parentTemplateId,
+                InheritanceConfig = inheritanceConfig,
+                IsActive = true,
+                ValidationStatus = InheritanceValidationStatus.Valid,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            using var connection = await _databaseService.CreateAndOpenConnectionAsync();
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                const string sql = @"
+                    INSERT INTO template_inheritance (
+                        id, child_template_id, parent_template_id, inheritance_type,
+                        field_overrides, settings_overrides, inheritance_priority,
+                        allow_field_addition, allow_field_removal, allow_field_modification,
+                        allow_settings_override, is_active, validation_status, validation_message,
+                        created_at, updated_at
+                    ) VALUES (
+                        @id, @child_template_id, @parent_template_id, @inheritance_type,
+                        @field_overrides, @settings_overrides, @inheritance_priority,
+                        @allow_field_addition, @allow_field_removal, @allow_field_modification,
+                        @allow_settings_override, @is_active, @validation_status, @validation_message,
+                        @created_at, @updated_at
+                    )";
+
+                using var command = new SqliteCommand(sql, connection, transaction);
+                AddInheritanceParameters(command, relationship);
+                await command.ExecuteNonQueryAsync();
+
+                transaction.Commit();
+                
+                _logger.LogInformation("Inheritance relationship created successfully: {RelationshipId}", relationship.Id);
+                return relationship;
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create inheritance relationship: Child {ChildId} -> Parent {ParentId}", childTemplateId, parentTemplateId);
+            throw;
+        }
+    }
+
+    public async Task<bool> RemoveInheritanceAsync(Guid childTemplateId, Guid parentTemplateId)
+    {
+        try
+        {
+            _logger.LogInformation("Removing inheritance relationship: Child {ChildId} -> Parent {ParentId}", childTemplateId, parentTemplateId);
+
+            using var connection = await _databaseService.CreateAndOpenConnectionAsync();
+            
+            const string sql = @"
+                DELETE FROM template_inheritance 
+                WHERE child_template_id = @child_template_id AND parent_template_id = @parent_template_id";
+
+            using var command = new SqliteCommand(sql, connection);
+            command.Parameters.AddWithValue("@child_template_id", childTemplateId.ToString());
+            command.Parameters.AddWithValue("@parent_template_id", parentTemplateId.ToString());
+
+            var rowsAffected = await command.ExecuteNonQueryAsync();
+            var removed = rowsAffected > 0;
+
+            if (removed)
+            {
+                _logger.LogInformation("Inheritance relationship removed successfully");
+            }
+            else
+            {
+                _logger.LogWarning("No inheritance relationship found to remove");
+            }
+
+            return removed;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to remove inheritance relationship: Child {ChildId} -> Parent {ParentId}", childTemplateId, parentTemplateId);
+            throw;
+        }
+    }
+
+    public async Task<List<TemplateInheritanceRelationship>> GetTemplateInheritanceAsync(Guid templateId)
+    {
+        try
+        {
+            using var connection = await _databaseService.CreateAndOpenConnectionAsync();
+            
+            const string sql = @"
+                SELECT id, child_template_id, parent_template_id, inheritance_type,
+                       field_overrides, settings_overrides, inheritance_priority,
+                       allow_field_addition, allow_field_removal, allow_field_modification,
+                       allow_settings_override, is_active, validation_status, validation_message,
+                       created_at, updated_at
+                FROM template_inheritance 
+                WHERE child_template_id = @template_id AND is_active = 1
+                ORDER BY inheritance_priority DESC";
+
+            using var command = new SqliteCommand(sql, connection);
+            command.Parameters.AddWithValue("@template_id", templateId.ToString());
+
+            var relationships = new List<TemplateInheritanceRelationship>();
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                relationships.Add(BuildInheritanceRelationshipFromReader(reader));
+            }
+
+            return relationships;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get template inheritance: {TemplateId}", templateId);
+            throw;
+        }
+    }
+
+    public async Task<List<TemplateInheritanceRelationship>> GetChildTemplatesAsync(Guid parentTemplateId)
+    {
+        try
+        {
+            using var connection = await _databaseService.CreateAndOpenConnectionAsync();
+            
+            const string sql = @"
+                SELECT id, child_template_id, parent_template_id, inheritance_type,
+                       field_overrides, settings_overrides, inheritance_priority,
+                       allow_field_addition, allow_field_removal, allow_field_modification,
+                       allow_settings_override, is_active, validation_status, validation_message,
+                       created_at, updated_at
+                FROM template_inheritance 
+                WHERE parent_template_id = @parent_template_id AND is_active = 1
+                ORDER BY inheritance_priority DESC";
+
+            using var command = new SqliteCommand(sql, connection);
+            command.Parameters.AddWithValue("@parent_template_id", parentTemplateId.ToString());
+
+            var relationships = new List<TemplateInheritanceRelationship>();
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                relationships.Add(BuildInheritanceRelationshipFromReader(reader));
+            }
+
+            return relationships;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get child templates: {ParentTemplateId}", parentTemplateId);
+            throw;
+        }
+    }
+
+    public async Task<TemplateInheritanceResult> ResolveTemplateInheritanceAsync(Guid templateId)
+    {
+        try
+        {
+            _logger.LogInformation("Resolving template inheritance: {TemplateId}", templateId);
+
+            var result = new TemplateInheritanceResult();
+            var visitedTemplates = new HashSet<Guid>();
+            var inheritanceChain = new List<Guid>();
+
+            // Get the complete inheritance chain
+            var chain = await GetInheritanceChainAsync(templateId);
+            if (chain.Count == 0)
+            {
+                // No inheritance, return the template as-is
+                var template = await GetTemplateAsync(templateId);
+                if (template != null)
+                {
+                    template.IsInheritanceResolved = true;
+                    result.IsSuccessful = true;
+                    result.ResolvedTemplate = template;
+                    result.InheritanceChain = new List<Guid> { templateId };
+                }
+                return result;
+            }
+
+            // Start with the root template and apply inheritance down the chain
+            ImportTemplate? resolvedTemplate = null;
+            for (int i = 0; i < chain.Count; i++)
+            {
+                var currentTemplateId = chain[i];
+                var currentTemplate = await GetTemplateAsync(currentTemplateId);
+                
+                if (currentTemplate == null)
+                {
+                    result.Errors.Add($"Template not found: {currentTemplateId}");
+                    continue;
+                }
+
+                if (resolvedTemplate == null)
+                {
+                    // This is the root template
+                    resolvedTemplate = currentTemplate;
+                    result.PropertySources = GetInitialPropertySources(resolvedTemplate);
+                    result.FieldSources = GetInitialFieldSources(resolvedTemplate);
+                }
+                else
+                {
+                    // Apply inheritance from parent to child
+                    var parentTemplateId = chain[i - 1];
+                    var inheritanceRelationships = await GetTemplateInheritanceAsync(currentTemplateId);
+                    
+                    var parentRelationship = inheritanceRelationships
+                        .FirstOrDefault(r => r.ParentTemplateId == parentTemplateId);
+                    
+                    if (parentRelationship != null)
+                    {
+                        resolvedTemplate = ApplyInheritance(resolvedTemplate, currentTemplate, parentRelationship.InheritanceConfig, result);
+                    }
+                }
+            }
+
+            if (resolvedTemplate != null)
+            {
+                resolvedTemplate.IsInheritanceResolved = true;
+                resolvedTemplate.InheritanceTracker = result.PropertySources;
+                result.IsSuccessful = true;
+                result.ResolvedTemplate = resolvedTemplate;
+                result.InheritanceChain = chain;
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to resolve template inheritance: {TemplateId}", templateId);
+            return new TemplateInheritanceResult
+            {
+                IsSuccessful = false,
+                Errors = new List<string> { ex.Message }
+            };
+        }
+    }
+
+    public async Task<bool> ValidateInheritanceAsync(Guid childTemplateId, Guid parentTemplateId)
+    {
+        try
+        {
+            // Check if templates exist
+            var childTemplate = await GetTemplateAsync(childTemplateId);
+            var parentTemplate = await GetTemplateAsync(parentTemplateId);
+            
+            if (childTemplate == null || parentTemplate == null)
+            {
+                return false;
+            }
+
+            // Check for self-inheritance
+            if (childTemplateId == parentTemplateId)
+            {
+                return false;
+            }
+
+            // Check if this would create a cycle
+            var parentChain = await GetInheritanceChainAsync(parentTemplateId);
+            if (parentChain.Contains(childTemplateId))
+            {
+                return false; // Would create a cycle
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to validate inheritance: Child {ChildId} -> Parent {ParentId}", childTemplateId, parentTemplateId);
+            return false;
+        }
+    }
+
+    public async Task<List<Guid>> GetInheritanceChainAsync(Guid templateId)
+    {
+        try
+        {
+            var chain = new List<Guid>();
+            var visitedTemplates = new HashSet<Guid>();
+            var currentTemplateId = templateId;
+
+            // Build the chain from child to root
+            var reverseChain = new List<Guid>();
+            while (currentTemplateId != Guid.Empty)
+            {
+                // Prevent infinite loops
+                if (visitedTemplates.Contains(currentTemplateId))
+                {
+                    _logger.LogWarning("Circular inheritance detected for template: {TemplateId}", templateId);
+                    break;
+                }
+
+                visitedTemplates.Add(currentTemplateId);
+                reverseChain.Add(currentTemplateId);
+
+                // Get parent template ID
+                var inheritanceRelationships = await GetTemplateInheritanceAsync(currentTemplateId);
+                if (inheritanceRelationships.Count == 0)
+                {
+                    break; // No more parents
+                }
+
+                // For simplicity, take the highest priority parent
+                var highestPriorityRelationship = inheritanceRelationships
+                    .OrderByDescending(r => r.InheritanceConfig.InheritancePriority)
+                    .First();
+                    
+                currentTemplateId = highestPriorityRelationship.ParentTemplateId;
+            }
+
+            // Reverse the chain so it goes from root to current
+            reverseChain.Reverse();
+            return reverseChain;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get inheritance chain: {TemplateId}", templateId);
+            return new List<Guid>();
+        }
+    }
+
+    public async Task<TemplateInheritanceRelationship> UpdateInheritanceConfigAsync(Guid childTemplateId, Guid parentTemplateId, TemplateInheritanceConfig inheritanceConfig)
+    {
+        try
+        {
+            _logger.LogInformation("Updating inheritance configuration: Child {ChildId} -> Parent {ParentId}", childTemplateId, parentTemplateId);
+
+            using var connection = await _databaseService.CreateAndOpenConnectionAsync();
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                const string sql = @"
+                    UPDATE template_inheritance SET
+                        inheritance_type = @inheritance_type,
+                        field_overrides = @field_overrides,
+                        settings_overrides = @settings_overrides,
+                        inheritance_priority = @inheritance_priority,
+                        allow_field_addition = @allow_field_addition,
+                        allow_field_removal = @allow_field_removal,
+                        allow_field_modification = @allow_field_modification,
+                        allow_settings_override = @allow_settings_override,
+                        updated_at = @updated_at
+                    WHERE child_template_id = @child_template_id AND parent_template_id = @parent_template_id";
+
+                using var command = new SqliteCommand(sql, connection, transaction);
+                command.Parameters.AddWithValue("@child_template_id", childTemplateId.ToString());
+                command.Parameters.AddWithValue("@parent_template_id", parentTemplateId.ToString());
+                command.Parameters.AddWithValue("@inheritance_type", inheritanceConfig.InheritanceType.ToString());
+                command.Parameters.AddWithValue("@field_overrides", JsonSerializer.Serialize(inheritanceConfig.FieldOverrides));
+                command.Parameters.AddWithValue("@settings_overrides", JsonSerializer.Serialize(inheritanceConfig.SettingsOverrides));
+                command.Parameters.AddWithValue("@inheritance_priority", inheritanceConfig.InheritancePriority);
+                command.Parameters.AddWithValue("@allow_field_addition", inheritanceConfig.AllowFieldAddition);
+                command.Parameters.AddWithValue("@allow_field_removal", inheritanceConfig.AllowFieldRemoval);
+                command.Parameters.AddWithValue("@allow_field_modification", inheritanceConfig.AllowFieldModification);
+                command.Parameters.AddWithValue("@allow_settings_override", inheritanceConfig.AllowSettingsOverride);
+                command.Parameters.AddWithValue("@updated_at", DateTime.UtcNow);
+
+                var rowsAffected = await command.ExecuteNonQueryAsync();
+                if (rowsAffected == 0)
+                {
+                    throw new InvalidOperationException("Inheritance relationship not found");
+                }
+
+                transaction.Commit();
+
+                // Return the updated relationship
+                var relationships = await GetTemplateInheritanceAsync(childTemplateId);
+                var updatedRelationship = relationships.FirstOrDefault(r => r.ParentTemplateId == parentTemplateId);
+                
+                if (updatedRelationship == null)
+                {
+                    throw new InvalidOperationException("Failed to retrieve updated inheritance relationship");
+                }
+
+                _logger.LogInformation("Inheritance configuration updated successfully");
+                return updatedRelationship;
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update inheritance configuration: Child {ChildId} -> Parent {ParentId}", childTemplateId, parentTemplateId);
+            throw;
+        }
+    }
+
+    public async Task<List<ImportTemplate>> GetAvailableParentTemplatesAsync(Guid forTemplateId)
+    {
+        try
+        {
+            var allTemplates = await GetAllTemplatesAsync(includeInactive: false);
+            var availableParents = new List<ImportTemplate>();
+
+            foreach (var template in allTemplates)
+            {
+                if (template.Id == forTemplateId)
+                    continue; // Can't be parent of itself
+
+                // Check if this template would create a cycle
+                if (await ValidateInheritanceAsync(forTemplateId, template.Id))
+                {
+                    availableParents.Add(template);
+                }
+            }
+
+            return availableParents;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get available parent templates for: {TemplateId}", forTemplateId);
+            throw;
+        }
+    }
+
+    #endregion
+
+    #region Inheritance Helper Methods
+
+    private void AddInheritanceParameters(SqliteCommand command, TemplateInheritanceRelationship relationship)
+    {
+        command.Parameters.AddWithValue("@id", relationship.Id.ToString());
+        command.Parameters.AddWithValue("@child_template_id", relationship.ChildTemplateId.ToString());
+        command.Parameters.AddWithValue("@parent_template_id", relationship.ParentTemplateId.ToString());
+        command.Parameters.AddWithValue("@inheritance_type", relationship.InheritanceConfig.InheritanceType.ToString());
+        command.Parameters.AddWithValue("@field_overrides", JsonSerializer.Serialize(relationship.InheritanceConfig.FieldOverrides));
+        command.Parameters.AddWithValue("@settings_overrides", JsonSerializer.Serialize(relationship.InheritanceConfig.SettingsOverrides));
+        command.Parameters.AddWithValue("@inheritance_priority", relationship.InheritanceConfig.InheritancePriority);
+        command.Parameters.AddWithValue("@allow_field_addition", relationship.InheritanceConfig.AllowFieldAddition);
+        command.Parameters.AddWithValue("@allow_field_removal", relationship.InheritanceConfig.AllowFieldRemoval);
+        command.Parameters.AddWithValue("@allow_field_modification", relationship.InheritanceConfig.AllowFieldModification);
+        command.Parameters.AddWithValue("@allow_settings_override", relationship.InheritanceConfig.AllowSettingsOverride);
+        command.Parameters.AddWithValue("@is_active", relationship.IsActive);
+        command.Parameters.AddWithValue("@validation_status", relationship.ValidationStatus.ToString());
+        command.Parameters.AddWithValue("@validation_message", relationship.ValidationMessage ?? string.Empty);
+        command.Parameters.AddWithValue("@created_at", relationship.CreatedAt);
+        command.Parameters.AddWithValue("@updated_at", relationship.UpdatedAt);
+    }
+
+    private TemplateInheritanceRelationship BuildInheritanceRelationshipFromReader(SqliteDataReader reader)
+    {
+        var relationship = new TemplateInheritanceRelationship
+        {
+            Id = Guid.Parse(reader.GetString("id")),
+            ChildTemplateId = Guid.Parse(reader.GetString("child_template_id")),
+            ParentTemplateId = Guid.Parse(reader.GetString("parent_template_id")),
+            IsActive = reader.GetBoolean("is_active"),
+            ValidationStatus = Enum.Parse<InheritanceValidationStatus>(reader.GetString("validation_status")),
+            ValidationMessage = reader.IsDBNull("validation_message") ? null : reader.GetString("validation_message"),
+            CreatedAt = reader.GetDateTime("created_at"),
+            UpdatedAt = reader.GetDateTime("updated_at")
+        };
+
+        // Deserialize inheritance configuration
+        var inheritanceType = Enum.Parse<InheritanceType>(reader.GetString("inheritance_type"));
+        var fieldOverridesJson = reader.GetString("field_overrides");
+        var settingsOverridesJson = reader.GetString("settings_overrides");
+
+        relationship.InheritanceConfig = new TemplateInheritanceConfig
+        {
+            InheritanceType = inheritanceType,
+            FieldOverrides = string.IsNullOrEmpty(fieldOverridesJson) 
+                ? new Dictionary<string, FieldOverrideConfig>()
+                : JsonSerializer.Deserialize<Dictionary<string, FieldOverrideConfig>>(fieldOverridesJson) ?? new(),
+            SettingsOverrides = string.IsNullOrEmpty(settingsOverridesJson)
+                ? new Dictionary<string, object>()
+                : JsonSerializer.Deserialize<Dictionary<string, object>>(settingsOverridesJson) ?? new(),
+            InheritancePriority = reader.GetInt32("inheritance_priority"),
+            AllowFieldAddition = reader.GetBoolean("allow_field_addition"),
+            AllowFieldRemoval = reader.GetBoolean("allow_field_removal"),
+            AllowFieldModification = reader.GetBoolean("allow_field_modification"),
+            AllowSettingsOverride = reader.GetBoolean("allow_settings_override")
+        };
+
+        return relationship;
+    }
+
+    private Dictionary<string, InheritanceSource> GetInitialPropertySources(ImportTemplate template)
+    {
+        var sources = new Dictionary<string, InheritanceSource>();
+        
+        // Mark all current properties as current source
+        sources["Name"] = InheritanceSource.Current;
+        sources["Description"] = InheritanceSource.Current;
+        sources["Category"] = InheritanceSource.Current;
+        sources["ConfidenceThreshold"] = InheritanceSource.Current;
+        sources["AutoApply"] = InheritanceSource.Current;
+        sources["AllowPartialMatches"] = InheritanceSource.Current;
+        sources["TemplatePriority"] = InheritanceSource.Current;
+        
+        return sources;
+    }
+
+    private Dictionary<string, InheritanceSource> GetInitialFieldSources(ImportTemplate template)
+    {
+        var sources = new Dictionary<string, InheritanceSource>();
+        
+        foreach (var field in template.Fields)
+        {
+            sources[field.Name] = InheritanceSource.Current;
+        }
+        
+        return sources;
+    }
+
+    private ImportTemplate ApplyInheritance(ImportTemplate parentTemplate, ImportTemplate childTemplate, TemplateInheritanceConfig config, TemplateInheritanceResult result)
+    {
+        var resolvedTemplate = childTemplate.CreateVersion(childTemplate.Version);
+        
+        switch (config.InheritanceType)
+        {
+            case InheritanceType.Full:
+                ApplyFullInheritance(parentTemplate, resolvedTemplate, config, result);
+                break;
+            case InheritanceType.FieldsOnly:
+                ApplyFieldsOnlyInheritance(parentTemplate, resolvedTemplate, config, result);
+                break;
+            case InheritanceType.SettingsOnly:
+                ApplySettingsOnlyInheritance(parentTemplate, resolvedTemplate, config, result);
+                break;
+            case InheritanceType.Custom:
+                ApplyCustomInheritance(parentTemplate, resolvedTemplate, config, result);
+                break;
+        }
+        
+        return resolvedTemplate;
+    }
+
+    private void ApplyFullInheritance(ImportTemplate parentTemplate, ImportTemplate childTemplate, TemplateInheritanceConfig config, TemplateInheritanceResult result)
+    {
+        // Apply settings inheritance
+        ApplySettingsInheritance(parentTemplate, childTemplate, config, result);
+        
+        // Apply fields inheritance
+        ApplyFieldsInheritance(parentTemplate, childTemplate, config, result);
+    }
+
+    private void ApplyFieldsOnlyInheritance(ImportTemplate parentTemplate, ImportTemplate childTemplate, TemplateInheritanceConfig config, TemplateInheritanceResult result)
+    {
+        ApplyFieldsInheritance(parentTemplate, childTemplate, config, result);
+    }
+
+    private void ApplySettingsOnlyInheritance(ImportTemplate parentTemplate, ImportTemplate childTemplate, TemplateInheritanceConfig config, TemplateInheritanceResult result)
+    {
+        ApplySettingsInheritance(parentTemplate, childTemplate, config, result);
+    }
+
+    private void ApplyCustomInheritance(ImportTemplate parentTemplate, ImportTemplate childTemplate, TemplateInheritanceConfig config, TemplateInheritanceResult result)
+    {
+        // Apply custom inheritance based on configuration
+        if (config.AllowSettingsOverride)
+        {
+            ApplySettingsInheritance(parentTemplate, childTemplate, config, result);
+        }
+        
+        ApplyFieldsInheritance(parentTemplate, childTemplate, config, result);
+    }
+
+    private void ApplySettingsInheritance(ImportTemplate parentTemplate, ImportTemplate childTemplate, TemplateInheritanceConfig config, TemplateInheritanceResult result)
+    {
+        if (!config.AllowSettingsOverride) return;
+
+        // Apply settings from parent unless explicitly overridden
+        if (!config.SettingsOverrides.ContainsKey("Category") && string.IsNullOrEmpty(childTemplate.Category))
+        {
+            childTemplate.Category = parentTemplate.Category;
+            result.PropertySources["Category"] = InheritanceSource.Inherited;
+        }
+
+        if (!config.SettingsOverrides.ContainsKey("ConfidenceThreshold") && childTemplate.ConfidenceThreshold == 0.75) // Default value
+        {
+            childTemplate.ConfidenceThreshold = parentTemplate.ConfidenceThreshold;
+            result.PropertySources["ConfidenceThreshold"] = InheritanceSource.Inherited;
+        }
+
+        if (!config.SettingsOverrides.ContainsKey("AutoApply"))
+        {
+            childTemplate.AutoApply = parentTemplate.AutoApply;
+            result.PropertySources["AutoApply"] = InheritanceSource.Inherited;
+        }
+
+        if (!config.SettingsOverrides.ContainsKey("AllowPartialMatches"))
+        {
+            childTemplate.AllowPartialMatches = parentTemplate.AllowPartialMatches;
+            result.PropertySources["AllowPartialMatches"] = InheritanceSource.Inherited;
+        }
+
+        // Merge tags and supported formats
+        foreach (var tag in parentTemplate.Tags)
+        {
+            if (!childTemplate.Tags.Contains(tag))
+            {
+                childTemplate.Tags.Add(tag);
+            }
+        }
+
+        foreach (var format in parentTemplate.SupportedFormats)
+        {
+            if (!childTemplate.SupportedFormats.Contains(format))
+            {
+                childTemplate.SupportedFormats.Add(format);
+            }
+        }
+    }
+
+    private void ApplyFieldsInheritance(ImportTemplate parentTemplate, ImportTemplate childTemplate, TemplateInheritanceConfig config, TemplateInheritanceResult result)
+    {
+        var childFieldNames = childTemplate.Fields.Select(f => f.Name).ToHashSet();
+        
+        // Process parent fields
+        foreach (var parentField in parentTemplate.Fields)
+        {
+            if (config.FieldOverrides.TryGetValue(parentField.Name, out var overrideConfig))
+            {
+                switch (overrideConfig.Action)
+                {
+                    case FieldOverrideAction.Inherit:
+                        if (!childFieldNames.Contains(parentField.Name) && config.AllowFieldAddition)
+                        {
+                            childTemplate.Fields.Add(parentField.CreateCopy());
+                            result.FieldSources[parentField.Name] = InheritanceSource.Inherited;
+                        }
+                        break;
+                        
+                    case FieldOverrideAction.Override:
+                        // Field is already in child template and will be used as-is
+                        if (childFieldNames.Contains(parentField.Name))
+                        {
+                            result.FieldSources[parentField.Name] = InheritanceSource.Current;
+                        }
+                        break;
+                        
+                    case FieldOverrideAction.Merge:
+                        MergeFields(parentField, childTemplate, overrideConfig, result);
+                        break;
+                        
+                    case FieldOverrideAction.Remove:
+                        if (config.AllowFieldRemoval)
+                        {
+                            childTemplate.Fields.RemoveAll(f => f.Name == parentField.Name);
+                        }
+                        break;
+                }
+            }
+            else
+            {
+                // Default behavior: inherit if not present in child
+                if (!childFieldNames.Contains(parentField.Name) && config.AllowFieldAddition)
+                {
+                    childTemplate.Fields.Add(parentField.CreateCopy());
+                    result.FieldSources[parentField.Name] = InheritanceSource.Inherited;
+                }
+            }
+        }
+    }
+
+    private void MergeFields(TemplateField parentField, ImportTemplate childTemplate, FieldOverrideConfig overrideConfig, TemplateInheritanceResult result)
+    {
+        var childField = childTemplate.Fields.FirstOrDefault(f => f.Name == parentField.Name);
+        if (childField == null)
+        {
+            // Field doesn't exist in child, add the parent field
+            childTemplate.Fields.Add(parentField.CreateCopy());
+            result.FieldSources[parentField.Name] = InheritanceSource.Inherited;
+            return;
+        }
+
+        // Merge specified properties
+        foreach (var property in overrideConfig.MergeProperties)
+        {
+            switch (property.ToLower())
+            {
+                case "textpatterns":
+                case "text_patterns":
+                    if (parentField.TextPatterns != null)
+                    {
+                        childField.TextPatterns ??= new List<string>();
+                        foreach (var pattern in parentField.TextPatterns)
+                        {
+                            if (!childField.TextPatterns.Contains(pattern))
+                            {
+                                childField.TextPatterns.Add(pattern);
+                            }
+                        }
+                    }
+                    break;
+                    
+                case "keywords":
+                    if (parentField.Keywords != null)
+                    {
+                        childField.Keywords ??= new List<string>();
+                        foreach (var keyword in parentField.Keywords)
+                        {
+                            if (!childField.Keywords.Contains(keyword))
+                            {
+                                childField.Keywords.Add(keyword);
+                            }
+                        }
+                    }
+                    break;
+                    
+                case "extractionzones":
+                case "extraction_zones":
+                    if (parentField.ExtractionZones != null)
+                    {
+                        childField.ExtractionZones ??= new List<ExtractionZone>();
+                        foreach (var zone in parentField.ExtractionZones)
+                        {
+                            if (!childField.ExtractionZones.Any(z => z.Name == zone.Name))
+                            {
+                                childField.ExtractionZones.Add(zone.CreateCopy());
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+
+        // Preserve parent validation rules if specified
+        if (overrideConfig.PreserveValidation && parentField.ValidationRules != null)
+        {
+            childField.ValidationRules ??= new Dictionary<string, object>();
+            foreach (var rule in parentField.ValidationRules)
+            {
+                if (!childField.ValidationRules.ContainsKey(rule.Key))
+                {
+                    childField.ValidationRules[rule.Key] = rule.Value;
+                }
+            }
+        }
+
+        result.FieldSources[parentField.Name] = InheritanceSource.Merged;
+    }
+
+    #endregion
 }
 
 /// <summary>
-/// Represents a change record in template version history
+/// Represents a change record in template history
 /// </summary>
 public class TemplateChangeRecord
 {

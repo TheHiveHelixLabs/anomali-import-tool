@@ -305,6 +305,86 @@ public interface IImportTemplateService
     Task<ImportTemplate> DuplicateTemplateAsync(Guid templateId, string newName, CancellationToken cancellationToken = default);
 
     #endregion
+
+    /// <summary>
+    /// Compares two template versions and returns the differences
+    /// </summary>
+    /// <param name="templateId">Template ID</param>
+    /// <param name="fromVersion">Source version to compare from</param>
+    /// <param name="toVersion">Target version to compare to</param>
+    /// <returns>Comparison result with differences</returns>
+    Task<TemplateComparisonResult> CompareTemplateVersionsAsync(Guid templateId, string fromVersion, string toVersion);
+
+    // Template Inheritance Methods
+
+    /// <summary>
+    /// Creates an inheritance relationship between a child and parent template
+    /// </summary>
+    /// <param name="childTemplateId">ID of the child template</param>
+    /// <param name="parentTemplateId">ID of the parent template</param>
+    /// <param name="inheritanceConfig">Configuration for the inheritance</param>
+    /// <returns>The created inheritance relationship</returns>
+    Task<TemplateInheritanceRelationship> CreateInheritanceAsync(Guid childTemplateId, Guid parentTemplateId, TemplateInheritanceConfig inheritanceConfig);
+
+    /// <summary>
+    /// Removes an inheritance relationship
+    /// </summary>
+    /// <param name="childTemplateId">ID of the child template</param>
+    /// <param name="parentTemplateId">ID of the parent template</param>
+    /// <returns>True if relationship was removed</returns>
+    Task<bool> RemoveInheritanceAsync(Guid childTemplateId, Guid parentTemplateId);
+
+    /// <summary>
+    /// Gets all inheritance relationships for a template (as child)
+    /// </summary>
+    /// <param name="templateId">Template ID</param>
+    /// <returns>List of inheritance relationships</returns>
+    Task<List<TemplateInheritanceRelationship>> GetTemplateInheritanceAsync(Guid templateId);
+
+    /// <summary>
+    /// Gets all child templates that inherit from a parent template
+    /// </summary>
+    /// <param name="parentTemplateId">Parent template ID</param>
+    /// <returns>List of child template inheritance relationships</returns>
+    Task<List<TemplateInheritanceRelationship>> GetChildTemplatesAsync(Guid parentTemplateId);
+
+    /// <summary>
+    /// Resolves a template with all inheritance applied
+    /// </summary>
+    /// <param name="templateId">Template ID to resolve</param>
+    /// <returns>Template inheritance result with resolved template</returns>
+    Task<TemplateInheritanceResult> ResolveTemplateInheritanceAsync(Guid templateId);
+
+    /// <summary>
+    /// Validates that an inheritance relationship would not create a cycle
+    /// </summary>
+    /// <param name="childTemplateId">Proposed child template ID</param>
+    /// <param name="parentTemplateId">Proposed parent template ID</param>
+    /// <returns>True if inheritance is valid (no cycles)</returns>
+    Task<bool> ValidateInheritanceAsync(Guid childTemplateId, Guid parentTemplateId);
+
+    /// <summary>
+    /// Gets the complete inheritance chain for a template
+    /// </summary>
+    /// <param name="templateId">Template ID</param>
+    /// <returns>List of template IDs in inheritance chain from root to current</returns>
+    Task<List<Guid>> GetInheritanceChainAsync(Guid templateId);
+
+    /// <summary>
+    /// Updates inheritance configuration for an existing relationship
+    /// </summary>
+    /// <param name="childTemplateId">Child template ID</param>
+    /// <param name="parentTemplateId">Parent template ID</param>
+    /// <param name="inheritanceConfig">New inheritance configuration</param>
+    /// <returns>Updated inheritance relationship</returns>
+    Task<TemplateInheritanceRelationship> UpdateInheritanceConfigAsync(Guid childTemplateId, Guid parentTemplateId, TemplateInheritanceConfig inheritanceConfig);
+
+    /// <summary>
+    /// Gets all templates that can be used as parent templates (no cycles)
+    /// </summary>
+    /// <param name="forTemplateId">Template ID that would be the child</param>
+    /// <returns>List of available parent templates</returns>
+    Task<List<ImportTemplate>> GetAvailableParentTemplatesAsync(Guid forTemplateId);
 }
 
 /// <summary>
