@@ -23,6 +23,8 @@ public class TemplateCreationViewModel : INotifyPropertyChanged
 
     public ObservableCollection<ExtractionZone> Zones { get; } = new();
 
+    public ObservableCollection<FieldExtractionPreview> PreviewResults { get; } = new();
+
     public TemplateField? SelectedField
     {
         get => _selectedField;
@@ -38,6 +40,8 @@ public class TemplateCreationViewModel : INotifyPropertyChanged
         AddFieldCommand = new RelayCommand(_ => AddField());
         RemoveFieldCommand = new RelayCommand(_ => RemoveField(), _ => SelectedField != null);
         SaveTemplateCommand = new RelayCommand(_ => SaveTemplate());
+        // Populate PreviewResults with placeholder values
+        PreviewResults.Add(new FieldExtractionPreview { FieldName = "SampleField", Value = "Value", Confidence = 0.85 });
     }
 
     private void AddField()

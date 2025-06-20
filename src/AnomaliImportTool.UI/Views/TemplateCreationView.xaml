@@ -40,6 +40,9 @@
             <Separator Margin="0,10" />
 
             <Button Content="Save Template" Command="{Binding SaveTemplateCommand}" Height="40" />
+
+            <!-- Preview extraction results -->
+            <controls:TemplatePreview Margin="0,10,0,0" />
         </StackPanel>
     </Grid>
 </UserControl> 
