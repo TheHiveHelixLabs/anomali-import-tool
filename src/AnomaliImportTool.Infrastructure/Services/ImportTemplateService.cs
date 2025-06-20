@@ -12,6 +12,8 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using System.Text;
 using System.Xml.Linq;
+using System.IO;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AnomaliImportTool.Infrastructure.Services;
 
@@ -1580,7 +1582,70 @@ public class ImportTemplateService : IImportTemplateService
 
     public async Task<TemplateTestResult> TestTemplateAsync(Guid templateId, string documentPath, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException("Template testing will be implemented in task 2.7");
+        var result = new TemplateTestResult();
+        try
+        {
+            _logger.LogInformation("Testing template {TemplateId} against document {DocumentPath}", templateId, documentPath);
+
+            if (!File.Exists(documentPath))
+            {
+                throw new FileNotFoundException($"Document file not found: {documentPath}");
+            }
+
+            // Load template (resolve inheritance if necessary)
+            var template = await GetTemplateAsync(templateId, cancellationToken);
+            if (template == null)
+            {
+                throw new ArgumentException($"Template with ID {templateId} not found");
+            }
+
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+            // Very lightweight document processing: read file text content
+            var document = new Document
+            {
+                FilePath = documentPath,
+                FileName = Path.GetFileName(documentPath),
+                FileType = Path.GetExtension(documentPath).TrimStart('.'),
+                FileSizeBytes = new FileInfo(documentPath).Length,
+                ExtractedText = await File.ReadAllTextAsync(documentPath, cancellationToken),
+                ProcessingStartTime = DateTime.UtcNow
+            };
+
+            // Run extraction
+            var extractionEngine = new TemplateExtractionEngine(NullLogger<TemplateExtractionEngine>.Instance);
+            var extractionResult = await extractionEngine.ExtractFieldsAsync(document, template);
+
+            stopwatch.Stop();
+
+            // Build test result
+            result.IsSuccessful = extractionResult.IsSuccessful;
+            result.OverallConfidence = extractionResult.OverallConfidence;
+            result.ExtractionTime = stopwatch.Elapsed;
+            result.ExtractedFields = extractionResult.FieldResults
+                .Where(kvp => kvp.Value.IsSuccessful && kvp.Value.ExtractedValue != null)
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ExtractedValue ?? string.Empty);
+            result.FieldConfidenceScores = extractionResult.FieldResults
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Confidence);
+            result.Warnings.AddRange(extractionResult.FieldResults
+                .Where(kvp => !kvp.Value.IsSuccessful && kvp.Value.IsRequired)
+                .Select(kvp => $"Required field '{kvp.Key}' not extracted"));
+
+            // Update usage statistics
+            await UpdateUsageStatisticsAsync(templateId, extractionResult.IsSuccessful, stopwatch.Elapsed, cancellationToken);
+
+            _logger.LogInformation("Template test completed. Success: {IsSuccessful}, Confidence: {Confidence:F2}",
+                result.IsSuccessful, result.OverallConfidence);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to test template {TemplateId}", templateId);
+            result.IsSuccessful = false;
+            result.Errors.Add(ex.Message);
+            return result;
+        }
     }
 
     #endregion
@@ -1589,17 +1654,55 @@ public class ImportTemplateService : IImportTemplateService
 
     public async Task UpdateUsageStatisticsAsync(Guid templateId, bool successful, TimeSpan extractionTime, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException("Usage statistics will be implemented in task 2.7");
+        try
+        {
+            var template = await GetTemplateAsync(templateId, cancellationToken);
+            if (template == null)
+            {
+                _logger.LogWarning("Template not found when updating usage stats: {TemplateId}", templateId);
+                return;
+            }
+
+            var stats = template.UsageStats ?? new TemplateUsageStats();
+            stats.TotalUses++;
+            if (successful) stats.SuccessfulUses++; else stats.FailedUses++;
+
+            // Update average extraction time
+            if (stats.SuccessfulUses > 0)
+            {
+                var totalTime = stats.AverageExtractionTime * (stats.SuccessfulUses - 1) + extractionTime.TotalMilliseconds;
+                stats.AverageExtractionTime = totalTime / stats.SuccessfulUses;
+            }
+
+            stats.SuccessRate = stats.TotalUses > 0 ? (double)stats.SuccessfulUses / stats.TotalUses : 0;
+            stats.LastUsed = DateTime.Now; // Use local time per cursor rules
+
+            template.UsageStats = stats;
+
+            // Persist only the usage_stats column to avoid side-effects on other data
+            using var connection = await _databaseService.CreateAndOpenConnectionAsync();
+            const string sql = "UPDATE import_templates SET usage_stats = @usage_stats WHERE id = @id";
+            using var command = new SqliteCommand(sql, connection);
+            command.Parameters.AddWithValue("@usage_stats", JsonSerializer.Serialize(stats));
+            command.Parameters.AddWithValue("@id", templateId.ToString());
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update usage statistics for template {TemplateId}", templateId);
+        }
     }
 
     public async Task<TemplateUsageStats> GetUsageStatisticsAsync(Guid templateId, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException("Usage statistics will be implemented in task 2.7");
+        var template = await GetTemplateAsync(templateId, cancellationToken);
+        return template?.UsageStats ?? new TemplateUsageStats();
     }
 
     public async Task<IEnumerable<ImportTemplate>> GetMostUsedTemplatesAsync(int count = 10, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException("Usage statistics will be implemented in task 2.7");
+        var templates = await GetAllTemplatesAsync(includeInactive: false, cancellationToken);
+        return templates.OrderByDescending(t => t.UsageStats.TotalUses).Take(count).ToList();
     }
 
     #endregion
