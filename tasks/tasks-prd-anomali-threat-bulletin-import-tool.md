@@ -1,7 +1,7 @@
 # Task List: Anomali Threat Bulletin Import Tool - Comprehensive Implementation Guide
 
 **Created from PRD**: `prd-anomali-threat-bulletin-import-tool.md`  
-**Last Updated**: June 25 2025 08:25
+**Last Updated**: June 25 2025 10:32
 **Status**: Cross-Platform Migration Complete - Import Template System Implementation Required  
 
 ---
@@ -48,9 +48,9 @@ The Anomali Threat Bulletin Import Tool is a **standalone, zero-installation** c
 - `src/AnomaliImportTool.Infrastructure/Services/ImportTemplateService.cs` - ✅ **ENHANCED** - Added comprehensive versioning system with rollback, change tracking, and version comparison
 
 ### **Testing Files**
-- `tests/AnomaliImportTool.Tests.Unit/Services/ImportTemplateServiceTests.cs` - Template service unit tests
-- `tests/AnomaliImportTool.Tests.Unit/Services/TemplateMatchingServiceTests.cs` - Template matching tests
-- `tests/AnomaliImportTool.Tests.Integration/TemplateExtractionIntegrationTests.cs` - End-to-end template tests
+- `tests/AnomaliImportTool.Tests.Unit/Services/ImportTemplateServiceTests.cs` - ✅ **ENHANCED** - Comprehensive CRUD operation tests with versioning, inheritance, and export/import testing
+- `tests/AnomaliImportTool.Tests.Unit/Services/TemplateMatchingServiceTests.cs` - ✅ **COMPLETE** - Fingerprinting algorithms, confidence scoring, and batch processing tests
+- `tests/AnomaliImportTool.Tests.Integration/TemplateExtractionIntegrationTests.cs` - ✅ **COMPLETE** - End-to-end template extraction workflows with validation and conditional rules
 - `tests/AnomaliImportTool.Tests.UI/Tests/TemplateCreationWorkflowTests.cs` - UI automation tests
 
 ### **Configuration & Data**
@@ -97,7 +97,7 @@ The Anomali Threat Bulletin Import Tool is a **standalone, zero-installation** c
   - [x] 3.7 Add multi-page document handling with page-specific extraction rule configuration (FR-18)
   - [x] 3.8 Integrate OCR settings configuration per template for scanned document processing (FR-18)
 
-- [ ] **4.0 Template Integration with Existing Workflow**
+- [x] **4.0 Template Integration with Existing Workflow**
   - [x] 4.1 Create TemplateSelectionView for the new 7-step wizard workflow with smart matching (FR-16)
   - [x] 4.2 Implement TemplateSelectionViewModel with automatic template suggestion and manual override (FR-16)
   - [x] 4.3 Enhance MetadataExtractionService to integrate with template-based extraction (FR-12A)
@@ -108,9 +108,9 @@ The Anomali Threat Bulletin Import Tool is a **standalone, zero-installation** c
   - [x] 4.8 Update naming templates to support custom fields extracted via import templates (FR-20)
 
 - [ ] **5.0 Template Testing & Quality Assurance**
-  - [ ] 5.1 Create ImportTemplateServiceTests with comprehensive CRUD operation testing
-  - [ ] 5.2 Create TemplateMatchingServiceTests covering fingerprinting algorithms and confidence scoring
-  - [ ] 5.3 Create TemplateExtractionIntegrationTests for end-to-end template extraction workflows
+  - [x] 5.1 Create ImportTemplateServiceTests with comprehensive CRUD operation testing
+  - [x] 5.2 Create TemplateMatchingServiceTests covering fingerprinting algorithms and confidence scoring
+  - [x] 5.3 Create TemplateExtractionIntegrationTests for end-to-end template extraction workflows
   - [ ] 5.4 Create TemplateCreationWorkflowTests for UI automation of template creation process
   - [ ] 5.5 Implement template performance benchmarking with accuracy metrics and extraction speed tests
   - [ ] 5.6 Create template validation test suite with edge cases and error scenarios

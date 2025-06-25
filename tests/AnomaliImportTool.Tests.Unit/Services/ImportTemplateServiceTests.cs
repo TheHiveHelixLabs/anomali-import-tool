@@ -382,6 +382,536 @@ public class ImportTemplateServiceTests : IDisposable
         result.IsActive.Should().BeFalse();
     }
 
+    [Fact]
+    public async Task ExportTemplateAsync_WithValidTemplate_ShouldReturnJsonString()
+    {
+        // Arrange
+        await _databaseService.InitializeDatabaseAsync();
+        var template = CreateTestTemplate("Export Template", "Security");
+        var created = await _service.CreateTemplateAsync(template);
+        
+        // Act
+        var result = await _service.ExportTemplateAsync(created.Id);
+        
+        // Assert
+        result.Should().NotBeNullOrWhiteSpace();
+        result.Should().Contain("Export Template");
+        result.Should().Contain("Security");
+    }
+
+    [Fact]
+    public async Task ImportTemplateAsync_WithValidJson_ShouldImportSuccessfully()
+    {
+        // Arrange
+        await _databaseService.InitializeDatabaseAsync();
+        var originalTemplate = CreateTestTemplate("Original Template", "Security");
+        var created = await _service.CreateTemplateAsync(originalTemplate);
+        var exportedJson = await _service.ExportTemplateAsync(created.Id);
+        
+        // Act
+        var importOptions = new TemplateImportOptions { AssignNewIds = true };
+        var imported = await _service.ImportTemplateAsync(exportedJson, importOptions);
+        
+        // Assert
+        imported.Should().NotBeNull();
+        imported.Name.Should().Be("Original Template");
+        imported.Category.Should().Be("Security");
+        imported.Id.Should().NotBe(created.Id); // New ID assigned
+    }
+
+    [Fact]
+    public async Task CreateTemplateVersionAsync_WithExistingTemplate_ShouldCreateNewVersion()
+    {
+        // Arrange
+        await _databaseService.InitializeDatabaseAsync();
+        var template = CreateTestTemplate("Versioned Template", "Security");
+        var created = await _service.CreateTemplateAsync(template);
+        
+        // Act
+        var newVersion = await _service.CreateTemplateVersionAsync(created.Id, "2.0");
+        
+        // Assert
+        newVersion.Should().NotBeNull();
+        newVersion.Version.Should().Be("2.0");
+        newVersion.Name.Should().Be("Versioned Template");
+        newVersion.Id.Should().NotBe(created.Id); // Different ID for new version
+    }
+
+    [Fact]
+    public async Task GetTemplateVersionsAsync_WithMultipleVersions_ShouldReturnAllVersions()
+    {
+        // Arrange
+        await _databaseService.InitializeDatabaseAsync();
+        var template = CreateTestTemplate("Multi Version Template", "Security");
+        var v1 = await _service.CreateTemplateAsync(template);
+        var v2 = await _service.CreateTemplateVersionAsync(v1.Id, "2.0");
+        var v3 = await _service.CreateTemplateVersionAsync(v1.Id, "3.0");
+        
+        // Act
+        var versions = await _service.GetTemplateVersionsAsync("Multi Version Template");
+        
+        // Assert
+        versions.Should().HaveCount(3);
+        versions.Should().Contain(t => t.Version == "1.0");
+        versions.Should().Contain(t => t.Version == "2.0");
+        versions.Should().Contain(t => t.Version == "3.0");
+    }
+
+    [Fact]
+    public async Task DuplicateTemplateAsync_WithExistingTemplate_ShouldCreateDuplicate()
+    {
+        // Arrange
+        await _databaseService.InitializeDatabaseAsync();
+        var template = CreateTestTemplate("Original Template", "Security");
+        var created = await _service.CreateTemplateAsync(template);
+        
+        // Act
+        var duplicated = await _service.DuplicateTemplateAsync(created.Id, "Duplicated Template");
+        
+        // Assert
+        duplicated.Should().NotBeNull();
+        duplicated.Name.Should().Be("Duplicated Template");
+        duplicated.Category.Should().Be("Security");
+        duplicated.Id.Should().NotBe(created.Id);
+        duplicated.Fields.Should().HaveCount(created.Fields.Count);
+    }
+
+    [Fact]
+    public async Task UpdateUsageStatisticsAsync_ShouldUpdateStatistics()
+    {
+        // Arrange
+        await _databaseService.InitializeDatabaseAsync();
+        var template = CreateTestTemplate("Usage Template", "Security");
+        var created = await _service.CreateTemplateAsync(template);
+        
+        // Act
+        await _service.UpdateUsageStatisticsAsync(created.Id, true, TimeSpan.FromSeconds(2.5));
+        await _service.UpdateUsageStatisticsAsync(created.Id, true, TimeSpan.FromSeconds(1.8));
+        await _service.UpdateUsageStatisticsAsync(created.Id, false, TimeSpan.FromSeconds(5.0));
+        
+        // Get updated statistics
+        var stats = await _service.GetUsageStatisticsAsync(created.Id);
+        
+        // Assert
+        stats.Should().NotBeNull();
+        stats.TotalUsageCount.Should().Be(3);
+        stats.SuccessfulUsageCount.Should().Be(2);
+        stats.FailureCount.Should().Be(1);
+        stats.AverageExtractionTime.Should().BeGreaterThan(TimeSpan.Zero);
+    }
+
+    [Fact]
+    public async Task TestTemplateAsync_WithValidDocument_ShouldReturnTestResult()
+    {
+        // Arrange
+        await _databaseService.InitializeDatabaseAsync();
+        var template = CreateTestTemplate("Test Template", "Security");
+        var created = await _service.CreateTemplateAsync(template);
+        
+        // Create a temporary test file
+        var tempFile = Path.GetTempFileName();
+        await File.WriteAllTextAsync(tempFile, "Test document content with sample data");
+        
+        try
+        {
+            // Act
+            var result = await _service.TestTemplateAsync(created.Id, tempFile);
+            
+            // Assert
+            result.Should().NotBeNull();
+            result.ExtractedFields.Should().NotBeNull();
+            result.FieldConfidenceScores.Should().NotBeNull();
+            result.ExtractionTime.Should().BeGreaterThan(TimeSpan.Zero);
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+                File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public async Task ValidateTemplateAsync_WithValidTemplate_ShouldReturnValidResult()
+    {
+        // Arrange
+        await _databaseService.InitializeDatabaseAsync();
+        var template = CreateTestTemplate("Valid Template", "Security");
+        
+        // Act
+        var result = await _service.ValidateTemplateAsync(template);
+        
+        // Assert
+        result.Should().NotBeNull();
+        result.IsValid.Should().BeTrue();
+        result.Errors.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ValidateTemplateAsync_WithInvalidTemplate_ShouldReturnInvalidResult()
+    {
+        // Arrange
+        await _databaseService.InitializeDatabaseAsync();
+        var invalidTemplate = new ImportTemplate
+        {
+            Name = "", // Invalid - empty name
+            SupportedFormats = new List<string>() // Invalid - no formats
+        };
+        
+        // Act
+        var result = await _service.ValidateTemplateAsync(invalidTemplate);
+        
+        // Assert
+        result.Should().NotBeNull();
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetMostUsedTemplatesAsync_ShouldReturnTemplatesByUsage()
+    {
+        // Arrange
+        await _databaseService.InitializeDatabaseAsync();
+        
+        var template1 = CreateTestTemplate("Template 1", "Security");
+        var template2 = CreateTestTemplate("Template 2", "Reports");
+        var created1 = await _service.CreateTemplateAsync(template1);
+        var created2 = await _service.CreateTemplateAsync(template2);
+        
+        // Simulate usage - template1 used more
+        await _service.UpdateUsageStatisticsAsync(created1.Id, true, TimeSpan.FromSeconds(1));
+        await _service.UpdateUsageStatisticsAsync(created1.Id, true, TimeSpan.FromSeconds(1));
+        await _service.UpdateUsageStatisticsAsync(created2.Id, true, TimeSpan.FromSeconds(1));
+        
+        // Act
+        var mostUsed = await _service.GetMostUsedTemplatesAsync(2);
+        
+        // Assert
+        mostUsed.Should().NotBeEmpty();
+        var mostUsedList = mostUsed.ToList();
+        mostUsedList.First().Id.Should().Be(created1.Id); // Most used should be first
+    }
+
+    [Fact]
+    public async Task ExportTemplatesAsync_WithMultipleTemplates_ShouldExportAll()
+    {
+        // Arrange
+        await _databaseService.InitializeDatabaseAsync();
+        
+        var template1 = CreateTestTemplate("Export Template 1", "Security");
+        var template2 = CreateTestTemplate("Export Template 2", "Reports");
+        var created1 = await _service.CreateTemplateAsync(template1);
+        var created2 = await _service.CreateTemplateAsync(template2);
+        
+        var templateIds = new[] { created1.Id, created2.Id };
+        
+        // Act
+        var result = await _service.ExportTemplatesAsync(templateIds);
+        
+        // Assert
+        result.Should().NotBeNullOrWhiteSpace();
+        result.Should().Contain("Export Template 1");
+        result.Should().Contain("Export Template 2");
+    }
+
+    [Fact]
+    public async Task RollbackToVersionAsync_WithValidVersion_ShouldRollback()
+    {
+        // Arrange
+        await _databaseService.InitializeDatabaseAsync();
+        
+        var template = CreateTestTemplate("Rollback Template", "Security");
+        var v1 = await _service.CreateTemplateAsync(template);
+        
+        // Create version 2 with changes
+        var v2Template = await _service.GetTemplateAsync(v1.Id);
+        v2Template!.Description = "Modified description";
+        var v2 = await _service.CreateTemplateVersionAsync(v1.Id, "2.0");
+        await _service.UpdateTemplateAsync(v2);
+        
+        // Act - rollback to version 1.0
+        var rolledBack = await _service.RollbackToVersionAsync(v2.Id, "1.0", "Test rollback");
+        
+        // Assert
+        rolledBack.Should().NotBeNull();
+        rolledBack.Description.Should().NotBe("Modified description");
+    }
+
+    [Fact]
+    public async Task GetTemplateChangeHistoryAsync_ShouldReturnChangeHistory()
+    {
+        // Arrange
+        await _databaseService.InitializeDatabaseAsync();
+        
+        var template = CreateTestTemplate("History Template", "Security");
+        var created = await _service.CreateTemplateAsync(template);
+        
+        // Make some changes
+        created.Description = "Updated description";
+        await _service.UpdateTemplateAsync(created);
+        
+        await _service.CreateTemplateVersionAsync(created.Id, "2.0");
+        
+        // Act
+        var history = await _service.GetTemplateChangeHistoryAsync(created.Id);
+        
+        // Assert
+        history.Should().NotBeEmpty();
+        history.Should().HaveCountGreaterOrEqualTo(1);
+    }
+
+    [Fact]
+    public async Task CreateInheritanceAsync_WithValidTemplates_ShouldCreateInheritanceRelationship()
+    {
+        // Arrange
+        await _databaseService.InitializeDatabaseAsync();
+        
+        var parentTemplate = CreateTestTemplate("Parent Template", "Security");
+        var childTemplate = CreateTestTemplate("Child Template", "Security");
+        var parent = await _service.CreateTemplateAsync(parentTemplate);
+        var child = await _service.CreateTemplateAsync(childTemplate);
+        
+        var config = new TemplateInheritanceConfig
+        {
+            InheritanceType = InheritanceType.Full,
+            AllowOverrides = true
+        };
+        
+        // Act
+        var relationship = await _service.CreateInheritanceAsync(child.Id, parent.Id, config);
+        
+        // Assert
+        relationship.Should().NotBeNull();
+        relationship.ChildTemplateId.Should().Be(child.Id);
+        relationship.ParentTemplateId.Should().Be(parent.Id);
+        relationship.InheritanceConfig.InheritanceType.Should().Be(InheritanceType.Full);
+    }
+
+    [Fact]
+    public async Task GetTemplateInheritanceAsync_WithInheritedTemplate_ShouldReturnRelationships()
+    {
+        // Arrange
+        await _databaseService.InitializeDatabaseAsync();
+        
+        var parentTemplate = CreateTestTemplate("Parent Template", "Security");
+        var childTemplate = CreateTestTemplate("Child Template", "Security");
+        var parent = await _service.CreateTemplateAsync(parentTemplate);
+        var child = await _service.CreateTemplateAsync(childTemplate);
+        
+        var config = new TemplateInheritanceConfig { InheritanceType = InheritanceType.Full };
+        await _service.CreateInheritanceAsync(child.Id, parent.Id, config);
+        
+        // Act
+        var relationships = await _service.GetTemplateInheritanceAsync(child.Id);
+        
+        // Assert
+        relationships.Should().HaveCount(1);
+        relationships[0].ParentTemplateId.Should().Be(parent.Id);
+    }
+
+    [Fact]
+    public async Task ValidateInheritanceAsync_WithCircularReference_ShouldReturnFalse()
+    {
+        // Arrange
+        await _databaseService.InitializeDatabaseAsync();
+        
+        var template1 = CreateTestTemplate("Template 1", "Security");
+        var template2 = CreateTestTemplate("Template 2", "Security");
+        var created1 = await _service.CreateTemplateAsync(template1);
+        var created2 = await _service.CreateTemplateAsync(template2);
+        
+        var config = new TemplateInheritanceConfig { InheritanceType = InheritanceType.Full };
+        await _service.CreateInheritanceAsync(created2.Id, created1.Id, config);
+        
+        // Act - try to create circular reference
+        var isValid = await _service.ValidateInheritanceAsync(created1.Id, created2.Id);
+        
+        // Assert
+        isValid.Should().BeFalse(); // Should detect circular reference
+    }
+
+    [Fact]
+    public async Task ResolveTemplateInheritanceAsync_WithInheritedTemplate_ShouldReturnResolvedTemplate()
+    {
+        // Arrange
+        await _databaseService.InitializeDatabaseAsync();
+        
+        var parentTemplate = CreateTestTemplate("Parent Template", "Security");
+        parentTemplate.Description = "Parent description";
+        var childTemplate = CreateTestTemplate("Child Template", "Security");
+        childTemplate.Description = "Child description";
+        
+        var parent = await _service.CreateTemplateAsync(parentTemplate);
+        var child = await _service.CreateTemplateAsync(childTemplate);
+        
+        var config = new TemplateInheritanceConfig 
+        { 
+            InheritanceType = InheritanceType.FieldsOnly,
+            AllowOverrides = true 
+        };
+        await _service.CreateInheritanceAsync(child.Id, parent.Id, config);
+        
+        // Act
+        var resolved = await _service.ResolveTemplateInheritanceAsync(child.Id);
+        
+        // Assert
+        resolved.Should().NotBeNull();
+        resolved.ResolvedTemplate.Should().NotBeNull();
+        resolved.InheritanceChain.Should().NotBeEmpty();
+        resolved.PropertySources.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetAvailableParentTemplatesAsync_ShouldReturnValidParents()
+    {
+        // Arrange
+        await _databaseService.InitializeDatabaseAsync();
+        
+        var template1 = CreateTestTemplate("Template 1", "Security");
+        var template2 = CreateTestTemplate("Template 2", "Security");
+        var template3 = CreateTestTemplate("Template 3", "Security");
+        
+        var created1 = await _service.CreateTemplateAsync(template1);
+        var created2 = await _service.CreateTemplateAsync(template2);
+        var created3 = await _service.CreateTemplateAsync(template3);
+        
+        // Create inheritance: template2 inherits from template1
+        var config = new TemplateInheritanceConfig { InheritanceType = InheritanceType.Full };
+        await _service.CreateInheritanceAsync(created2.Id, created1.Id, config);
+        
+        // Act - get available parents for template3
+        var availableParents = await _service.GetAvailableParentTemplatesAsync(created3.Id);
+        
+        // Assert
+        availableParents.Should().NotBeEmpty();
+        availableParents.Should().Contain(t => t.Id == created1.Id);
+        availableParents.Should().Contain(t => t.Id == created2.Id);
+        availableParents.Should().NotContain(t => t.Id == created3.Id); // Can't inherit from itself
+    }
+
+    [Fact]
+    public async Task CompareTemplateVersionsAsync_WithDifferentVersions_ShouldReturnComparison()
+    {
+        // Arrange
+        await _databaseService.InitializeDatabaseAsync();
+        
+        var template = CreateTestTemplate("Compare Template", "Security");
+        var v1 = await _service.CreateTemplateAsync(template);
+        
+        // Create version 2 with changes
+        var v2Template = await _service.GetTemplateAsync(v1.Id);
+        v2Template!.Description = "Modified description for v2";
+        var v2 = await _service.CreateTemplateVersionAsync(v1.Id, "2.0");
+        
+        // Act
+        var comparison = await _service.CompareTemplateVersionsAsync(v1.Id, "1.0", "2.0");
+        
+        // Assert
+        comparison.Should().NotBeNull();
+        comparison.TemplateId.Should().Be(v1.Id);
+        comparison.Version1.Should().Be("1.0");
+        comparison.Version2.Should().Be("2.0");
+        comparison.HasDifferences.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ExportTemplatesToFileAsync_WithValidTemplates_ShouldCreateFile()
+    {
+        // Arrange
+        await _databaseService.InitializeDatabaseAsync();
+        
+        var template1 = CreateTestTemplate("File Export Template 1", "Security");
+        var template2 = CreateTestTemplate("File Export Template 2", "Reports");
+        var created1 = await _service.CreateTemplateAsync(template1);
+        var created2 = await _service.CreateTemplateAsync(template2);
+        
+        var templateIds = new[] { created1.Id, created2.Id };
+        var tempFilePath = Path.GetTempFileName();
+        
+        try
+        {
+            // Act
+            var result = await _service.ExportTemplatesToFileAsync(templateIds, tempFilePath);
+            
+            // Assert
+            result.Should().NotBeNull();
+            result.IsSuccessful.Should().BeTrue();
+            result.ExportedCount.Should().Be(2);
+            result.FilePath.Should().Be(tempFilePath);
+            File.Exists(tempFilePath).Should().BeTrue();
+            
+            var fileContent = await File.ReadAllTextAsync(tempFilePath);
+            fileContent.Should().Contain("File Export Template 1");
+            fileContent.Should().Contain("File Export Template 2");
+        }
+        finally
+        {
+            if (File.Exists(tempFilePath))
+                File.Delete(tempFilePath);
+        }
+    }
+
+    [Fact]
+    public async Task ImportTemplatesFromFileAsync_WithValidFile_ShouldImportTemplates()
+    {
+        // Arrange
+        await _databaseService.InitializeDatabaseAsync();
+        
+        // First export some templates
+        var template1 = CreateTestTemplate("Import Template 1", "Security");
+        var template2 = CreateTestTemplate("Import Template 2", "Reports");
+        var created1 = await _service.CreateTemplateAsync(template1);
+        var created2 = await _service.CreateTemplateAsync(template2);
+        
+        var templateIds = new[] { created1.Id, created2.Id };
+        var tempFilePath = Path.GetTempFileName();
+        
+        try
+        {
+            await _service.ExportTemplatesToFileAsync(templateIds, tempFilePath);
+            
+            // Delete the templates from DB to test import
+            await _service.DeleteTemplateAsync(created1.Id);
+            await _service.DeleteTemplateAsync(created2.Id);
+            
+            var importOptions = new TemplateImportOptions { AssignNewIds = true };
+            
+            // Act
+            var result = await _service.ImportTemplatesFromFileAsync(tempFilePath, importOptions);
+            
+            // Assert
+            result.Should().NotBeNull();
+            result.IsSuccessful.Should().BeTrue();
+            result.SuccessfulCount.Should().Be(2);
+            result.ImportedTemplates.Should().HaveCount(2);
+        }
+        finally
+        {
+            if (File.Exists(tempFilePath))
+                File.Delete(tempFilePath);
+        }
+    }
+
+    [Fact]
+    public async Task ValidateImportAsync_WithValidJson_ShouldReturnValidResult()
+    {
+        // Arrange
+        await _databaseService.InitializeDatabaseAsync();
+        
+        var template = CreateTestTemplate("Validation Template", "Security");
+        var created = await _service.CreateTemplateAsync(template);
+        var exportedJson = await _service.ExportTemplateAsync(created.Id);
+        
+        // Act
+        var result = await _service.ValidateImportAsync(exportedJson);
+        
+        // Assert
+        result.Should().NotBeNull();
+        result.IsValid.Should().BeTrue();
+        result.ValidCount.Should().Be(1);
+        result.InvalidCount.Should().Be(0);
+        result.GeneralErrors.Should().BeEmpty();
+    }
+
     private ImportTemplate CreateTestTemplate(string name, string category)
     {
         return new ImportTemplate
