@@ -18,6 +18,11 @@ public class TemplateCreationViewModel : INotifyPropertyChanged
     private ConditionalExtractionRule? _selectedCondition;
     private int _currentPage = 1;
     private int _totalPages = 1;
+    private bool _ocrEnabled;
+    private string _ocrLanguage = "eng";
+    private int _ocrEngineMode = 3;
+    private int _ocrPageSegmentationMode = 6;
+    private int _ocrConfidenceThreshold = 60;
 
     public BitmapImage? PreviewImage
     {
@@ -63,6 +68,36 @@ public class TemplateCreationViewModel : INotifyPropertyChanged
     {
         get => _totalPages;
         set { _totalPages = value; OnPropertyChanged(); }
+    }
+
+    public bool OcrEnabled
+    {
+        get => _ocrEnabled;
+        set { _ocrEnabled = value; OnPropertyChanged(); }
+    }
+
+    public string OcrLanguage
+    {
+        get => _ocrLanguage;
+        set { _ocrLanguage = value; OnPropertyChanged(); }
+    }
+
+    public int OcrEngineMode
+    {
+        get => _ocrEngineMode;
+        set { _ocrEngineMode = value; OnPropertyChanged(); }
+    }
+
+    public int OcrPageSegmentationMode
+    {
+        get => _ocrPageSegmentationMode;
+        set { _ocrPageSegmentationMode = value; OnPropertyChanged(); }
+    }
+
+    public int OcrConfidenceThreshold
+    {
+        get => _ocrConfidenceThreshold;
+        set { _ocrConfidenceThreshold = value; OnPropertyChanged(); }
     }
 
     public ICommand AddFieldCommand { get; }
@@ -117,6 +152,14 @@ public class TemplateCreationViewModel : INotifyPropertyChanged
             Name = TemplateName,
             Fields = Fields.ToList(),
             SupportedFormats = new() { "pdf", "docx", "xlsx" }, // default placeholder
+            OcrSettings = new OcrSettings
+            {
+                Enabled = OcrEnabled,
+                Language = OcrLanguage,
+                EngineMode = OcrEngineMode,
+                PageSegmentationMode = OcrPageSegmentationMode,
+                ConfidenceThreshold = OcrConfidenceThreshold
+            }
         };
 
         // TODO: Call template service to save
@@ -129,7 +172,15 @@ public class TemplateCreationViewModel : INotifyPropertyChanged
         {
             Name = TemplateName,
             Fields = Fields.ToList(),
-            SupportedFormats = new() { "pdf" }
+            SupportedFormats = new() { "pdf" },
+            OcrSettings = new OcrSettings
+            {
+                Enabled = OcrEnabled,
+                Language = OcrLanguage,
+                EngineMode = OcrEngineMode,
+                PageSegmentationMode = OcrPageSegmentationMode,
+                ConfidenceThreshold = OcrConfidenceThreshold
+            }
         };
 
         var result = template.ValidateTemplate();
