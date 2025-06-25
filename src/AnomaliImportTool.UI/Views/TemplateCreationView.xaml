@@ -18,7 +18,7 @@
         <Grid x:Name="PreviewArea" Background="#FF1E1E1E" Margin="10">
             <Image Source="{Binding PreviewImage}" Stretch="Uniform" />
             <!-- Placeholder for ExtractionZoneEditor; to be implemented in Task 3.2 -->
-            <controls:ExtractionZoneEditor Zones="{Binding Zones}" />
+            <controls:ExtractionZoneEditor Zones="{Binding Zones}" CurrentPage="{Binding CurrentPage}" />
         </Grid>
 
         <!-- Right panel for field configuration and actions -->
@@ -72,6 +72,12 @@
 
             <!-- Preview extraction results -->
             <controls:TemplatePreview Margin="0,10,0,0" />
+
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                <Button Content="Prev" Command="{Binding PrevPageCommand}" Width="60" />
+                <TextBlock Text="{Binding CurrentPage}" Width="40" TextAlignment="Center" VerticalAlignment="Center" />
+                <Button Content="Next" Command="{Binding NextPageCommand}" Width="60" />
+            </StackPanel>
         </StackPanel>
     </Grid>
 </UserControl> 

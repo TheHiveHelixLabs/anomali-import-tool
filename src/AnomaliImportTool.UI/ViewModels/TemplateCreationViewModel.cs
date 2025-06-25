@@ -16,6 +16,8 @@ public class TemplateCreationViewModel : INotifyPropertyChanged
     private TemplateField? _selectedField;
     private string _templateName = string.Empty;
     private ConditionalExtractionRule? _selectedCondition;
+    private int _currentPage = 1;
+    private int _totalPages = 1;
 
     public BitmapImage? PreviewImage
     {
@@ -51,6 +53,18 @@ public class TemplateCreationViewModel : INotifyPropertyChanged
         set { _selectedCondition = value; OnPropertyChanged(); }
     }
 
+    public int CurrentPage
+    {
+        get => _currentPage;
+        set { _currentPage = value; OnPropertyChanged(); }
+    }
+
+    public int TotalPages
+    {
+        get => _totalPages;
+        set { _totalPages = value; OnPropertyChanged(); }
+    }
+
     public ICommand AddFieldCommand { get; }
     public ICommand RemoveFieldCommand { get; }
     public ICommand SaveTemplateCommand { get; }
@@ -58,6 +72,8 @@ public class TemplateCreationViewModel : INotifyPropertyChanged
     public ICommand TestTemplateCommand { get; }
     public ICommand AddConditionCommand { get; }
     public ICommand RemoveConditionCommand { get; }
+    public ICommand NextPageCommand { get; }
+    public ICommand PrevPageCommand { get; }
 
     public TemplateCreationViewModel()
     {
@@ -68,6 +84,8 @@ public class TemplateCreationViewModel : INotifyPropertyChanged
         TestTemplateCommand = new RelayCommand(_ => TestTemplate());
         AddConditionCommand = new RelayCommand(_ => AddCondition());
         RemoveConditionCommand = new RelayCommand(_ => RemoveCondition(), _ => SelectedCondition != null);
+        NextPageCommand = new RelayCommand(_ => ChangePage(1), _ => CurrentPage < TotalPages);
+        PrevPageCommand = new RelayCommand(_ => ChangePage(-1), _ => CurrentPage > 1);
         // Populate PreviewResults with placeholder values
         PreviewResults.Add(new FieldExtractionPreview { FieldName = "SampleField", Value = "Value", Confidence = 0.85 });
     }
@@ -159,6 +177,15 @@ public class TemplateCreationViewModel : INotifyPropertyChanged
         {
             Conditions.Remove(SelectedCondition);
             SelectedCondition = null;
+        }
+    }
+
+    private void ChangePage(int delta)
+    {
+        var newPage = CurrentPage + delta;
+        if (newPage >= 1 && newPage <= TotalPages)
+        {
+            CurrentPage = newPage;
         }
     }
 

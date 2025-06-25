@@ -24,6 +24,16 @@ public class ExtractionZoneEditor : Canvas
         set => SetValue(ZonesProperty, value);
     }
 
+    public static readonly DependencyProperty CurrentPageProperty = DependencyProperty.Register(
+        nameof(CurrentPage), typeof(int), typeof(ExtractionZoneEditor),
+        new FrameworkPropertyMetadata(1, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public int CurrentPage
+    {
+        get => (int)GetValue(CurrentPageProperty);
+        set => SetValue(CurrentPageProperty, value);
+    }
+
     private ExtractionZone? _activeZone;
     private Point _startPoint;
     private bool _isDrawing;
@@ -72,7 +82,7 @@ public class ExtractionZoneEditor : Canvas
             {
                 Id = Guid.NewGuid(),
                 Name = $"Zone{Zones.Count + 1}",
-                PageNumber = 1,
+                PageNumber = CurrentPage,
                 X = pos.X,
                 Y = pos.Y,
                 Width = 0,
@@ -129,7 +139,7 @@ public class ExtractionZoneEditor : Canvas
 
     private ExtractionZone? HitTestZone(Point pos)
     {
-        return Zones.FirstOrDefault(z => pos.X >= z.X && pos.X <= z.X + z.Width && pos.Y >= z.Y && pos.Y <= z.Y + z.Height);
+        return Zones.FirstOrDefault(z => z.PageNumber == CurrentPage && pos.X >= z.X && pos.X <= z.X + z.Width && pos.Y >= z.Y && pos.Y <= z.Y + z.Height);
     }
 
     protected override void OnRender(DrawingContext dc)
@@ -137,7 +147,7 @@ public class ExtractionZoneEditor : Canvas
         base.OnRender(dc);
         if (Zones == null) return;
 
-        foreach (var zone in Zones)
+        foreach (var zone in Zones.Where(z => z.PageNumber == CurrentPage))
         {
             var rect = new Rect(zone.X, zone.Y, zone.Width, zone.Height);
             var pen = zone == SelectedZone ? new Pen(Brushes.LimeGreen, 3) : new Pen(Brushes.Red, 2);
