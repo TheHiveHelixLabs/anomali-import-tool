@@ -13,8 +13,7 @@ The Anomali Threat Bulletin Import Tool is a fully portable, standalone cross-pl
 5. **Flexible Integration**: Support multiple Anomali API versions and instances
 6. **Audit Compliance**: Maintain NIST-compliant security practices and comprehensive audit trails
 7. **Error Resilience**: Provide fallback options for failed imports and clear user feedback
-8. **Version Control Integration**: Automatically commit and push completed tasks to Git repositories for seamless development workflow
-9. **Complete Portability**: Run from any location (USB drives, network shares, local directories) with **NO INSTALLATION REQUIRED** - simply unzip and execute
+8. **Complete Portability**: Run from any location (USB drives, network shares, local directories) with **NO INSTALLATION REQUIRED** - simply unzip and execute
 
 ## User Stories
 
@@ -25,17 +24,15 @@ The Anomali Threat Bulletin Import Tool is a fully portable, standalone cross-pl
 5. **As a security administrator**, I want to create custom import templates that define exactly where to extract usernames, ticket numbers, and other metadata from different document types so that data extraction is consistent and accurate across our organization
 6. **As a security analyst**, I want to preview and confirm imports before submission so that I can verify data accuracy
 7. **As a compliance officer**, I want comprehensive audit trails of all import activities so that we maintain proper documentation
-8. **As a developer**, I want the system to automatically commit and push my completed work to Git so that version control is maintained without manual intervention
-9. **As a project manager**, I want automatic Git integration to track task completion and maintain code history for project oversight
-10. **As a security analyst**, I want to run the application directly from a USB drive on any Windows, macOS, or Linux machine with **NO INSTALLATION** required - just unzip and run the executable
-11. **As an IT administrator**, I want to deploy the application to network shares so users can run it directly on any platform without local installation, administrative privileges, or system modifications
-12. **As a field analyst**, I want to carry the application on portable media and use it on different operating systems without leaving traces, requiring system changes, or needing installation procedures
-13. **As a new user**, I want an interactive tutorial that guides me through the interface so I can become productive quickly without reading documentation
-14. **As a visual learner**, I want to see document relationships through Visio-style connections so I can understand how files are grouped together
-15. **As a power user**, I want to switch between Simple and Advanced modes mid-workflow so I can use the appropriate interface for my current task
-16. **As a security analyst with accessibility needs**, I want full keyboard navigation and voice control support so I can use the application effectively regardless of my physical capabilities
-17. **As a frequent user**, I want the interface to feel responsive and alive with smooth animations so my daily workflow feels engaging rather than mechanical
-18. **As a user processing large batches**, I want to see real-time progress with file-by-file details so I understand exactly what the system is doing and how long it will take
+8. **As a security analyst**, I want to run the application directly from a USB drive on any Windows, macOS, or Linux machine with **NO INSTALLATION** required - just unzip and run the executable
+9. **As an IT administrator**, I want to deploy the application to network shares so users can run it directly on any platform without local installation, administrative privileges, or system modifications
+10. **As a field analyst**, I want to carry the application on portable media and use it on different operating systems without leaving traces, requiring system changes, or needing installation procedures
+11. **As a new user**, I want an interactive tutorial that guides me through the interface so I can become productive quickly without reading documentation
+12. **As a visual learner**, I want to see document relationships through Visio-style connections so I can understand how files are grouped together
+13. **As a power user**, I want to switch between Simple and Advanced modes mid-workflow so I can use the appropriate interface for my current task
+14. **As a security analyst with accessibility needs**, I want full keyboard navigation and voice control support so I can use the application effectively regardless of my physical capabilities
+15. **As a frequent user**, I want the interface to feel responsive and alive with smooth animations so my daily workflow feels engaging rather than mechanical
+16. **As a user processing large batches**, I want to see real-time progress with file-by-file details so I understand exactly what the system is doing and how long it will take
 
 ## Functional Requirements
 
@@ -329,17 +326,7 @@ The Anomali Threat Bulletin Import Tool is a fully portable, standalone cross-pl
 117. **FR-117**: The system must implement property-based testing for complex algorithms
 118. **FR-118**: The system must maintain high reliability with comprehensive error recovery
 
-### Version Control & Development Integration
-119. **FR-119**: The system must integrate with Git version control for project source code management using portable Git configuration
-120. **FR-120**: The system must support configurable Git repository settings (remote URL, branch, credentials) stored in portable files
-121. **FR-121**: The system must automatically commit code changes with standardized commit messages following Conventional Commits format
-122. **FR-122**: The system must support automatic pushing to remote Git repositories (GitHub) upon successful task completion
-123. **FR-123**: The system must provide Git commit templates with development metadata (version, completion status, timestamp)
-124. **FR-124**: The system must handle Git authentication securely using SSH keys or personal access tokens in portable storage
-125. **FR-125**: The system must support Git branch management for development workflows
-126. **FR-126**: The system must provide rollback capabilities for failed Git operations
-127. **FR-127**: The system must maintain Git operation logs for development tracking in portable log files
-128. **FR-128**: The system must integrate with GitHub for release management and source distribution
+
 
 ## Non-Goals (Out of Scope)
 
@@ -428,7 +415,7 @@ The Anomali Threat Bulletin Import Tool is a fully portable, standalone cross-pl
 - **Logging**: Serilog with structured logging, file sinks, and correlation ID tracking
 - **Database**: SQLite for settings, history, and workspace persistence with encryption at rest
 - **Network**: HttpClient with Polly for retry policies, circuit breakers, and API resilience
-- **Git Integration**: LibGit2Sharp for Git operations with SSH/HTTPS authentication and GitHub API integration
+
 
 ### API Integration
 - **Anomali ThreatStream API Support**: 
@@ -689,7 +676,7 @@ This PRD is evaluated across seven critical categories to ensure professional-gr
 | Category | Current Score | Target | Status | Key Enhancements |
 |----------|---------------|--------|--------|------------------|
 | **Security** | 10/10 | 10/10 | ✅ **ACHIEVED** | Secure credential storage (FR-52), input validation (FR-46), secure communications (FR-50) |
-| **Agility** | 10/10 | 10/10 | ✅ **ACHIEVED** | GitHub integration (FR-120), automation workflows (FR-63), portable deployment |
+| **Agility** | 10/10 | 10/10 | ✅ **ACHIEVED** | Automation workflows, portable deployment, flexible configuration |
 | **Usability** | 10/10 | 10/10 | ✅ **ACHIEVED** | WCAG 2.1 AA compliance (FR-31), onboarding wizard (FR-35), contextual help (FR-34) |
 | **Documentation** | 10/10 | 10/10 | ✅ **ACHIEVED** | Comprehensive user guides, API documentation, troubleshooting guides |
 | **Logging** | 10/10 | 10/10 | ✅ **ACHIEVED** | Structured local logging (FR-70), operation correlation (FR-75), audit trails (FR-72) |
@@ -706,11 +693,11 @@ This PRD is evaluated across seven critical categories to ensure professional-gr
 - Secure memory management to prevent credential leakage
 
 **Agility Excellence (10/10)**:
-- Direct GitHub integration for source code distribution
-- Automated Git workflows with conventional commit standards
 - Portable deployment requiring no installation
 - Configurable automation workflows for repetitive tasks
 - Macro recording capabilities for power users
+- Flexible configuration management
+- Cross-platform compatibility
 
 **Usability Excellence (10/10)**:
 - Full WCAG 2.1 AA accessibility compliance
@@ -810,7 +797,7 @@ Based on enterprise best practices and the requirements analysis, the following 
 - **Code Quality**: SonarQube score >95%, zero critical issues, <5% technical debt
 - **Code Stability**: 95%+ test coverage, comprehensive error recovery, performance validated
 - **Security**: Zero critical vulnerabilities, secure credential storage, input validation
-- **Agility**: GitHub integration operational, portable deployment, automation workflows
+- **Agility**: Portable deployment operational, automation workflows, flexible configuration
 - **Usability**: WCAG 2.1 AA certified, 95%+ user satisfaction, accessibility audited
 - **Documentation**: 100% API coverage, comprehensive user guides, troubleshooting resources
 - **Logging**: Local structured logging operational, audit trails, correlation tracking 

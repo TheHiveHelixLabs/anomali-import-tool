@@ -53,11 +53,10 @@
     <PackageReference Include="System.Text.Json" />
   </ItemGroup>
 
-  <!-- Project References - Core only for now -->
+  <!-- Project References - Core and Infrastructure -->
   <ItemGroup>
     <ProjectReference Include="..\..\AnomaliImportTool.Core\AnomaliImportTool.Core.csproj" />
-    <!-- Infrastructure temporarily excluded due to compilation errors -->
-    <!-- <ProjectReference Include="..\..\AnomaliImportTool.Infrastructure\AnomaliImportTool.Infrastructure.csproj" /> -->
+    <ProjectReference Include="..\..\AnomaliImportTool.Infrastructure\AnomaliImportTool.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
