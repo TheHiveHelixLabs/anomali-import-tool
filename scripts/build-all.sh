@@ -125,7 +125,7 @@ build_platform() {
     )
     
     if [[ $framework != "net8.0-browserwasm" ]]; then
-        publish_args+=(--runtime "$runtime" --self-contained true)
+        publish_args+=(--framework "$framework" --runtime "$runtime" --self-contained true)
     else
         publish_args+=(--framework "$framework")
     fi
