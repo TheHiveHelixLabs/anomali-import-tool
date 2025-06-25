@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl x:Class="AnomaliImportTool.WPF.Views.TemplateSelectionView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:viewmodel="clr-namespace:AnomaliImportTool.WPF.ViewModels"
+             xmlns:controls="clr-namespace:AnomaliImportTool.WPF.Controls"
+             mc:Ignorable="d"
+             d:DesignHeight="800" d:DesignWidth="1200"
+             d:DataContext="{d:DesignInstance Type=viewmodel:TemplateSelectionViewModel}">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="280" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Left panel: search + template list -->
+        <StackPanel Grid.Column="0" Margin="10" Orientation="Vertical">
+            <TextBlock Text="Select a Template" FontSize="18" FontWeight="Bold" Margin="0,0,0,10" />
+
+            <!-- Search box -->
+            <DockPanel Margin="0,0,0,10">
+                <TextBox Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                         Width="200" 
+                         VerticalAlignment="Center" 
+                         Margin="0,0,5,0" 
+                         ToolTip="Search templates" />
+                <Button Content="Search" Command="{Binding SearchCommand}" Width="60" />
+            </DockPanel>
+
+            <!-- Template list -->
+            <ListView ItemsSource="{Binding Templates}" 
+                      SelectedItem="{Binding SelectedTemplate, Mode=TwoWay}" 
+                      Height="600">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Vertical" Margin="5">
+                            <TextBlock Text="{Binding Name}" FontWeight="Bold" />
+                            <TextBlock Text="{Binding Description}" FontStyle="Italic" FontSize="12" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+
+            <!-- Action buttons -->
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,0" HorizontalAlignment="Left">
+                <Button Content="Refresh" Command="{Binding RefreshCommand}" Width="70" Margin="0,0,5,0" />
+                <Button Content="New" Command="{Binding CreateCommand}" Width="70" Margin="0,0,5,0" />
+                <Button Content="Edit" Command="{Binding EditCommand}" Width="70" />
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Right panel: preview + details -->
+        <Grid Grid.Column="1" Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="200" />
+            </Grid.RowDefinitions>
+
+            <!-- Template preview (placeholder) -->
+            <controls:TemplatePreview Grid.Row="0" Template="{Binding SelectedTemplate}" />
+
+            <!-- Template details -->
+            <Border Grid.Row="1" BorderBrush="#FFAAAAAA" BorderThickness="1" Padding="10">
+                <ScrollViewer>
+                    <StackPanel Orientation="Vertical">
+                        <TextBlock Text="Template Details" FontWeight="Bold" FontSize="16" />
+                        <TextBlock Text="Name:" FontWeight="Bold" Margin="0,10,0,0" />
+                        <TextBlock Text="{Binding SelectedTemplate.Name}" />
+
+                        <TextBlock Text="Description:" FontWeight="Bold" Margin="0,10,0,0" />
+                        <TextBlock Text="{Binding SelectedTemplate.Description}" TextWrapping="Wrap" />
+
+                        <TextBlock Text="Version:" FontWeight="Bold" Margin="0,10,0,0" />
+                        <TextBlock Text="{Binding SelectedTemplate.Version}" />
+
+                        <TextBlock Text="Category:" FontWeight="Bold" Margin="0,10,0,0" />
+                        <TextBlock Text="{Binding SelectedTemplate.Category}" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl> 

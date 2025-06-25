@@ -1,7 +1,7 @@
 # Task List: Anomali Threat Bulletin Import Tool - Comprehensive Implementation Guide
 
 **Created from PRD**: `prd-anomali-threat-bulletin-import-tool.md`  
-**Last Updated**: June 25 2025 07:49
+**Last Updated**: June 25 2025 07:56
 **Status**: Cross-Platform Migration Complete - Import Template System Implementation Required  
 
 ---
@@ -98,7 +98,7 @@ The Anomali Threat Bulletin Import Tool is a **standalone, zero-installation** c
   - [x] 3.8 Integrate OCR settings configuration per template for scanned document processing (FR-18)
 
 - [ ] **4.0 Template Integration with Existing Workflow**
-  - [ ] 4.1 Create TemplateSelectionView for the new 7-step wizard workflow with smart matching (FR-16)
+  - [x] 4.1 Create TemplateSelectionView for the new 7-step wizard workflow with smart matching (FR-16)
   - [ ] 4.2 Implement TemplateSelectionViewModel with automatic template suggestion and manual override (FR-16)
   - [ ] 4.3 Enhance MetadataExtractionService to integrate with template-based extraction (FR-12A)
   - [ ] 4.4 Update DocumentProcessingService to support template-guided processing workflow (FR-12A)
