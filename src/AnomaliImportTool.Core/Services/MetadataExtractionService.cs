@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using AnomaliImportTool.Core.Models;
 
 namespace AnomaliImportTool.Core.Services
 {
@@ -22,7 +23,7 @@ namespace AnomaliImportTool.Core.Services
         /// <summary>
         /// Extracts metadata from document content and filename
         /// </summary>
-        public ExtractedMetadata ExtractMetadata(string content, string fileName, Dictionary<string, string> documentProperties = null)
+        public ExtractedMetadata ExtractMetadata(string content, string fileName, Dictionary<string, string> documentProperties = null, ImportTemplate template = null)
         {
             var metadata = new ExtractedMetadata
             {
@@ -36,7 +37,8 @@ namespace AnomaliImportTool.Core.Services
             // Extract from content
             if (!string.IsNullOrWhiteSpace(content))
             {
-                ExtractFromContent(content, metadata);
+                var patterns = template != null ? MergeTemplatePatterns(template) : _patterns;
+                ApplyPatternsToContent(content, patterns, metadata);
             }
 
             // Merge document properties
@@ -170,35 +172,7 @@ namespace AnomaliImportTool.Core.Services
         /// <summary>
         /// Extracts metadata from content
         /// </summary>
-        private void ExtractFromContent(string content, ExtractedMetadata metadata)
-        {
-            foreach (var pattern in _patterns)
-            {
-                try
-                {
-                    var regex = new Regex(pattern.Pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
-                    var matches = regex.Matches(content);
-
-                    if (matches.Count > 0)
-                    {
-                        var values = matches.Cast<Match>()
-                            .Select(m => ExtractValue(m, pattern.CaptureGroup))
-                            .Where(v => !string.IsNullOrWhiteSpace(v))
-                            .Distinct()
-                            .ToList();
-
-                        if (values.Any())
-                        {
-                            ApplyExtractedValues(pattern.Field, values, metadata);
-                        }
-                    }
-                }
-                catch
-                {
-                    // Skip failed patterns
-                }
-            }
-        }
+        private void ExtractFromContent(string content, ExtractedMetadata metadata) => ApplyPatternsToContent(content, _patterns, metadata);
 
         /// <summary>
         /// Extracts value from regex match
@@ -256,11 +230,10 @@ namespace AnomaliImportTool.Core.Services
                     break;
                 
                 default:
+                    // Store values in custom fields
                     if (!metadata.CustomFields.ContainsKey(field))
-                    {
                         metadata.CustomFields[field] = new List<string>();
-                    }
-                    metadata.CustomFields[field].AddRange(values);
+                    metadata.CustomFields[field].AddRange(values.Where(v => !metadata.CustomFields[field].Contains(v)));
                     break;
             }
         }
@@ -449,6 +422,82 @@ namespace AnomaliImportTool.Core.Services
                 ["hash"] = hash => hash.ToUpperInvariant(),
                 ["cve"] = cve => cve.ToUpperInvariant()
             };
+        }
+
+        /// <summary>
+        /// Creates extraction patterns from a template and merges with default patterns
+        /// </summary>
+        private List<ExtractionPattern> MergeTemplatePatterns(ImportTemplate template)
+        {
+            var merged = new List<ExtractionPattern>(_patterns);
+
+            if (template == null)
+                return merged;
+
+            foreach (var field in template.Fields)
+            {
+                if (field.ExtractionMethod != ExtractionMethod.Text || field.TextPatterns.Count == 0)
+                    continue;
+
+                string fieldKey = field.FieldType switch
+                {
+                    TemplateFieldType.Username => "author",
+                    TemplateFieldType.TicketNumber => "ticket",
+                    TemplateFieldType.Date => "date",
+                    TemplateFieldType.Email => "email",
+                    TemplateFieldType.Text => field.Name.ToLowerInvariant(),
+                    _ => field.Name.ToLowerInvariant()
+                };
+
+                int captureGroup = 1; // assume first capture group
+
+                foreach (var pattern in field.TextPatterns)
+                {
+                    merged.Add(new ExtractionPattern
+                    {
+                        Name = $"TPL_{field.Name}",
+                        Field = fieldKey,
+                        Pattern = pattern,
+                        CaptureGroup = captureGroup,
+                        Description = $"Pattern derived from template field {field.Name}"
+                    });
+                }
+            }
+
+            return merged;
+        }
+
+        /// <summary>
+        /// Applies extraction patterns to content and populates metadata
+        /// </summary>
+        private void ApplyPatternsToContent(string content, List<ExtractionPattern> patterns, ExtractedMetadata metadata)
+        {
+            foreach (var pattern in patterns)
+            {
+                try
+                {
+                    var regex = new Regex(pattern.Pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+                    var matches = regex.Matches(content);
+
+                    if (matches.Count > 0)
+                    {
+                        var values = matches.Cast<Match>()
+                            .Select(m => ExtractValue(m, pattern.CaptureGroup))
+                            .Where(v => !string.IsNullOrWhiteSpace(v))
+                            .Distinct()
+                            .ToList();
+
+                        if (values.Any())
+                        {
+                            ApplyExtractedValues(pattern.Field, values, metadata);
+                        }
+                    }
+                }
+                catch
+                {
+                    // Skip invalid pattern
+                }
+            }
         }
     }
 
