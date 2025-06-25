@@ -50,8 +50,11 @@ public class TemplateMatchingService : ITemplateMatchingService
         {
             _logger.LogInformation("Finding best template match for document: {DocumentPath}", documentPath);
 
-            var matches = await GetAllMatchesAsync(documentPath, availableTemplates, _settings.DefaultCriteria.AutoApplicationThreshold, 1, cancellationToken);
-            var bestMatch = matches.FirstOrDefault();
+            var matches = await GetAllMatchesAsync(documentPath, availableTemplates, _settings.DefaultCriteria.AutoApplicationThreshold, 5, cancellationToken);
+            var bestMatch = matches
+                .OrderByDescending(m => m.ConfidenceScore)
+                .ThenByDescending(m => m.Template.TemplatePriority)
+                .FirstOrDefault();
 
             if (bestMatch != null)
             {
@@ -107,6 +110,7 @@ public class TemplateMatchingService : ITemplateMatchingService
             // Sort by confidence score descending and take top results
             var rankedMatches = matches
                 .OrderByDescending(m => m.ConfidenceScore)
+                .ThenByDescending(m => m.Template.TemplatePriority)
                 .Take(maxResults)
                 .ToList();
 
