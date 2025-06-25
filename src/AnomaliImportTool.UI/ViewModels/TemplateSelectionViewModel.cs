@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using AnomaliImportTool.UI.DependencyInjection;
 using System.IO;
 using System.Linq;
+using AnomaliImportTool.Infrastructure.Services;
 
 namespace AnomaliImportTool.WPF.ViewModels;
 
@@ -31,6 +32,7 @@ public class TemplateSelectionViewModel : INotifyPropertyChanged
     private bool _isLoading;
     private string _statusMessage = string.Empty;
     private string? _documentPath;
+    private TemplateMatchResult? _selectedMatch;
 
     #endregion
 
@@ -46,6 +48,7 @@ public class TemplateSelectionViewModel : INotifyPropertyChanged
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         Templates = new ObservableCollection<ImportTemplate>();
+        Matches = new ObservableCollection<TemplateMatchResult>();
         SearchCommand = new RelayCommand(async _ => await SearchAsync());
         RefreshCommand = new RelayCommand(async _ => await LoadTemplatesAsync());
         CreateCommand = new RelayCommand(_ => OnCreateTemplate());
@@ -65,6 +68,7 @@ public class TemplateSelectionViewModel : INotifyPropertyChanged
     #region Properties
 
     public ObservableCollection<ImportTemplate> Templates { get; }
+    public ObservableCollection<TemplateMatchResult> Matches { get; } = new();
 
     public string SearchText
     {
@@ -98,6 +102,12 @@ public class TemplateSelectionViewModel : INotifyPropertyChanged
     {
         get => _documentPath;
         set { _documentPath = value; OnPropertyChanged(); _ = SuggestTemplatesAsync(); }
+    }
+
+    public TemplateMatchResult? SelectedMatch
+    {
+        get => _selectedMatch;
+        set { _selectedMatch = value; OnPropertyChanged(); SelectedTemplate = value?.Template; }
     }
 
     #endregion
@@ -192,15 +202,20 @@ public class TemplateSelectionViewModel : INotifyPropertyChanged
             IsLoading = true;
             StatusMessage = "Suggesting templates...";
 
-            var bestMatch = await _matchingService.FindBestMatchAsync(DocumentPath!);
+            Matches.Clear();
+            var allTemplates = await _templateService.GetAllTemplatesAsync();
+            var matchResults = await _matchingService.GetAllMatchesAsync(DocumentPath!, allTemplates, 0.1, 10);
+            foreach(var m in matchResults)
+                Matches.Add(m);
+
+            var bestMatch = matchResults.FirstOrDefault();
             if (bestMatch != null)
             {
-                // Ensure template list contains best match
-                if (!Templates.Any(t => t.Id == bestMatch.Template.Id))
-                {
-                    Templates.Insert(0, bestMatch.Template);
-                }
-                SelectedTemplate = Templates.FirstOrDefault(t => t.Id == bestMatch.Template.Id);
+                SelectedMatch = bestMatch;
+                // Populate template list for manual override
+                Templates.Clear();
+                foreach(var m in Matches)
+                    Templates.Add(m.Template);
                 StatusMessage = $"Suggested template: {bestMatch.Template.Name} (Confidence {bestMatch.ConfidenceScore:F2})";
             }
             else

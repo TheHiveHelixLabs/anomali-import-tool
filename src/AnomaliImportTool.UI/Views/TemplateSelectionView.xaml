@@ -6,9 +6,13 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:viewmodel="clr-namespace:AnomaliImportTool.WPF.ViewModels"
              xmlns:controls="clr-namespace:AnomaliImportTool.WPF.Controls"
+             xmlns:local="clr-namespace:AnomaliImportTool.WPF.Converters"
              mc:Ignorable="d"
              d:DesignHeight="800" d:DesignWidth="1200"
              d:DataContext="{d:DesignInstance Type=viewmodel:TemplateSelectionViewModel}">
+    <UserControl.Resources>
+        <local:PercentageConverter x:Key="PercentageConverter" />
+    </UserControl.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="280" />
@@ -29,15 +33,16 @@
                 <Button Content="Search" Command="{Binding SearchCommand}" Width="60" />
             </DockPanel>
 
-            <!-- Template list -->
-            <ListView ItemsSource="{Binding Templates}" 
-                      SelectedItem="{Binding SelectedTemplate, Mode=TwoWay}" 
+            <!-- Template list with confidence -->
+            <ListView ItemsSource="{Binding Matches}" 
+                      SelectedItem="{Binding SelectedMatch, Mode=TwoWay}" 
                       Height="600">
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Vertical" Margin="5">
-                            <TextBlock Text="{Binding Name}" FontWeight="Bold" />
-                            <TextBlock Text="{Binding Description}" FontStyle="Italic" FontSize="12" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding Template.Name}" FontWeight="Bold" />
+                            <ProgressBar Value="{Binding ConfidenceScore, Converter={StaticResource PercentageConverter}}" Height="6" Margin="0,2,0,2" />
+                            <TextBlock Text="{Binding Template.Description}" FontStyle="Italic" FontSize="12" TextWrapping="Wrap" />
                         </StackPanel>
                     </DataTemplate>
                 </ListView.ItemTemplate>
