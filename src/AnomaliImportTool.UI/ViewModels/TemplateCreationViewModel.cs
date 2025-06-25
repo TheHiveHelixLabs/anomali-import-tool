@@ -15,6 +15,7 @@ public class TemplateCreationViewModel : INotifyPropertyChanged
     private BitmapImage? _previewImage;
     private TemplateField? _selectedField;
     private string _templateName = string.Empty;
+    private ConditionalExtractionRule? _selectedCondition;
 
     public BitmapImage? PreviewImage
     {
@@ -30,6 +31,8 @@ public class TemplateCreationViewModel : INotifyPropertyChanged
 
     public ObservableCollection<string> ValidationErrors { get; } = new();
 
+    public ObservableCollection<ConditionalExtractionRule> Conditions { get; } = new();
+
     public TemplateField? SelectedField
     {
         get => _selectedField;
@@ -42,11 +45,19 @@ public class TemplateCreationViewModel : INotifyPropertyChanged
         set { _templateName = value; OnPropertyChanged(); }
     }
 
+    public ConditionalExtractionRule? SelectedCondition
+    {
+        get => _selectedCondition;
+        set { _selectedCondition = value; OnPropertyChanged(); }
+    }
+
     public ICommand AddFieldCommand { get; }
     public ICommand RemoveFieldCommand { get; }
     public ICommand SaveTemplateCommand { get; }
     public ICommand ValidateTemplateCommand { get; }
     public ICommand TestTemplateCommand { get; }
+    public ICommand AddConditionCommand { get; }
+    public ICommand RemoveConditionCommand { get; }
 
     public TemplateCreationViewModel()
     {
@@ -55,6 +66,8 @@ public class TemplateCreationViewModel : INotifyPropertyChanged
         SaveTemplateCommand = new RelayCommand(_ => SaveTemplate());
         ValidateTemplateCommand = new RelayCommand(_ => ValidateTemplate());
         TestTemplateCommand = new RelayCommand(_ => TestTemplate());
+        AddConditionCommand = new RelayCommand(_ => AddCondition());
+        RemoveConditionCommand = new RelayCommand(_ => RemoveCondition(), _ => SelectedCondition != null);
         // Populate PreviewResults with placeholder values
         PreviewResults.Add(new FieldExtractionPreview { FieldName = "SampleField", Value = "Value", Confidence = 0.85 });
     }
@@ -131,6 +144,21 @@ public class TemplateCreationViewModel : INotifyPropertyChanged
                     Confidence = Math.Round(rnd.NextDouble(), 2)
                 });
             }
+        }
+    }
+
+    private void AddCondition()
+    {
+        var cond = new ConditionalExtractionRule { FieldName = "Field", Operator = ConditionOperator.Contains, Value = "keyword" };
+        Conditions.Add(cond);
+    }
+
+    private void RemoveCondition()
+    {
+        if (SelectedCondition != null)
+        {
+            Conditions.Remove(SelectedCondition);
+            SelectedCondition = null;
         }
     }
 
