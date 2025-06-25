@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using AnomaliImportTool.Core.Interfaces;
 using AnomaliImportTool.Core.Models;
 using Microsoft.Extensions.Logging;
+using AnomaliImportTool.Infrastructure.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AnomaliImportTool.Infrastructure.DocumentProcessing
 {
@@ -19,14 +21,17 @@ namespace AnomaliImportTool.Infrastructure.DocumentProcessing
         private readonly ILogger<DocumentProcessingService> _logger;
         private readonly Dictionary<string, IDocumentProcessor> _processors;
         private readonly ProcessingOptions _defaultOptions;
+        private readonly TemplateExtractionEngine? _templateExtractionEngine;
 
         public DocumentProcessingService(
             ILogger<DocumentProcessingService> logger,
-            IEnumerable<IDocumentProcessor> processors)
+            IEnumerable<IDocumentProcessor> processors,
+            TemplateExtractionEngine? templateExtractionEngine = null)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _processors = new Dictionary<string, IDocumentProcessor>(StringComparer.OrdinalIgnoreCase);
             _defaultOptions = new ProcessingOptions();
+            _templateExtractionEngine = templateExtractionEngine;
 
             // Register processors by their supported extensions
             foreach (var processor in processors ?? Enumerable.Empty<IDocumentProcessor>())
@@ -293,6 +298,41 @@ namespace AnomaliImportTool.Infrastructure.DocumentProcessing
         public bool IsFileTypeSupported(string filePath)
         {
             return GetProcessorForFile(filePath) != null;
+        }
+
+        /// <summary>
+        /// Processes a document and applies a template-guided extraction, returning the document with extracted fields populated.
+        /// </summary>
+        /// <param name="filePath">Path to file</param>
+        /// <param name="template">Template to apply</param>
+        /// <param name="options">Processing options</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        public async Task<Document> ProcessWithTemplateAsync(string filePath, ImportTemplate template, ProcessingOptions options = null, CancellationToken cancellationToken = default)
+        {
+            if (template == null) throw new ArgumentNullException(nameof(template));
+
+            // First process the document to extract text/content
+            var document = await ProcessDocumentInternalAsync(filePath, options, cancellationToken);
+
+            // Run template extraction
+            var engine = _templateExtractionEngine ?? new TemplateExtractionEngine(NullLogger<TemplateExtractionEngine>.Instance);
+            var extractionResult = await engine.ExtractFieldsAsync(document, template);
+
+            // Merge field results into document
+            foreach (var kvp in extractionResult.FieldResults)
+            {
+                if (kvp.Value.IsSuccessful && !string.IsNullOrEmpty(kvp.Value.ExtractedValue))
+                {
+                    document.ExtractedFields[kvp.Key] = kvp.Value.ExtractedValue!;
+                }
+            }
+
+            // Add extraction metadata
+            document.CustomProperties["TemplateId"] = template.Id;
+            document.CustomProperties["TemplateConfidence"] = extractionResult.OverallConfidence;
+            document.CustomProperties["TemplateAppliedAt"] = extractionResult.ExtractionEndTime;
+
+            return document;
         }
     }
 
