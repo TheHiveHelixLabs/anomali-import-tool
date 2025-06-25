@@ -28,7 +28,7 @@ public class WizardModeViewModel : BaseViewModel
 
     // Private backing fields
     private int _currentStep = 0;
-    private int _totalSteps = 6;
+    private int _totalSteps = 7;
     private double _overallProgress = 0.0;
     private string _currentStepTitle = "";
     private string _currentStepDescription = "";
@@ -45,6 +45,7 @@ public class WizardModeViewModel : BaseViewModel
     private ObservableCollection<ProcessingResult> _processingResults = new();
     private UploadConfiguration _uploadConfig = new();
     private WizardSummary _wizardSummary = new();
+    private ImportTemplate? _selectedTemplate;
 
     /// <summary>
     /// Initialize Wizard Mode ViewModel
@@ -222,6 +223,15 @@ public class WizardModeViewModel : BaseViewModel
     {
         get => _wizardSummary;
         set => this.RaiseAndSetIfChanged(ref _wizardSummary, value);
+    }
+
+    /// <summary>
+    /// Selected template
+    /// </summary>
+    public ImportTemplate? SelectedTemplate
+    {
+        get => _selectedTemplate;
+        set => this.RaiseAndSetIfChanged(ref _selectedTemplate, value);
     }
 
     #endregion
@@ -408,33 +418,42 @@ public class WizardModeViewModel : BaseViewModel
             2 => new WizardStep
             {
                 StepNumber = 3,
+                Title = "Template Selection",
+                Description = "Select or confirm the template to guide extraction",
+                Instructions = "The system suggests a template automatically. You can override the selection.",
+                IsCompleted = SelectedTemplate != null,
+                ValidationMessage = SelectedTemplate == null ? "Please select a template to continue" : ""
+            },
+            3 => new WizardStep
+            {
+                StepNumber = 4,
                 Title = "Configuration",
                 Description = "Configure processing options and settings",
                 Instructions = "Set your processing preferences, extraction settings, and output format options.",
                 IsCompleted = ProcessingConfig.IsValid,
                 ValidationMessage = !ProcessingConfig.IsValid ? "Please configure all required processing options" : ""
             },
-            3 => new WizardStep
+            4 => new WizardStep
             {
-                StepNumber = 4,
+                StepNumber = 5,
                 Title = "Processing",
                 Description = "Process the documents and extract threat intelligence",
                 Instructions = "Click 'Start Processing' to begin extracting threat intelligence from your documents.",
                 IsCompleted = ProcessingResults.Any(r => r.Status == ProcessingStatus.Completed),
                 ValidationMessage = ""
             },
-            4 => new WizardStep
+            5 => new WizardStep
             {
-                StepNumber = 5,
+                StepNumber = 6,
                 Title = "Review Results",
                 Description = "Review the processing results and extracted data",
                 Instructions = "Verify the extracted threat intelligence data and make any necessary adjustments.",
                 IsCompleted = ProcessingResults.All(r => r.IsReviewed),
                 ValidationMessage = ProcessingResults.Any(r => !r.IsReviewed) ? "Please review all processing results" : ""
             },
-            5 => new WizardStep
+            6 => new WizardStep
             {
-                StepNumber = 6,
+                StepNumber = 7,
                 Title = "Upload to Anomali",
                 Description = "Upload the processed data to Anomali ThreatStream",
                 Instructions = "Configure upload settings and transfer your threat intelligence to Anomali ThreatStream.",
@@ -456,10 +475,11 @@ public class WizardModeViewModel : BaseViewModel
         {
             0 => SelectedFiles.Count > 0, // File Selection
             1 => DocumentPreviews.Count > 0, // Document Preview
-            2 => ProcessingConfig.IsValid, // Configuration
-            3 => ProcessingResults.Any(r => r.Status == ProcessingStatus.Completed), // Processing
-            4 => ProcessingResults.All(r => r.IsReviewed), // Review Results
-            5 => true, // Upload - always can proceed to finish
+            2 => SelectedTemplate != null, // Template Selection
+            3 => ProcessingConfig.IsValid, // Configuration
+            4 => ProcessingResults.Any(r => r.Status == ProcessingStatus.Completed), // Processing
+            5 => ProcessingResults.All(r => r.IsReviewed), // Review Results
+            6 => true, // Upload
             _ => false
         };
 
@@ -846,20 +866,23 @@ public class WizardModeViewModel : BaseViewModel
             case 1: // Document Preview
                 await GenerateDocumentPreviewsAsync();
                 break;
-            case 2: // Configuration
+            case 2: // Template Selection
+                // Ensure template is selected
+                break;
+            case 3: // Configuration
                 // Ensure processing config is ready
                 break;
-            case 3: // Processing
+            case 4: // Processing
                 // Ready for processing
                 break;
-            case 4: // Review Results
+            case 5: // Review Results
                 // Mark results as ready for review
                 foreach (var result in ProcessingResults)
                 {
                     result.IsReviewed = false; // Reset review status
                 }
                 break;
-            case 5: // Upload
+            case 6: // Upload
                 // Prepare upload configuration
                 break;
         }
