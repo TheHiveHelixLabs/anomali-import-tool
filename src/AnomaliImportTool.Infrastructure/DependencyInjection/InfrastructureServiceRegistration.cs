@@ -65,7 +65,7 @@ namespace AnomaliImportTool.Infrastructure.DependencyInjection
             
             // Register file grouping and naming services
             services.AddTransient<FileGroupingService>();
-            services.AddTransient<NamingTemplateService>();
+            services.AddTransient<Core.Services.NamingTemplateService>();
             services.AddTransient<MetadataExtractionService>();
             
             // Register template services

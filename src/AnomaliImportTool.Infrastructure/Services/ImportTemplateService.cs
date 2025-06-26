@@ -1161,11 +1161,17 @@ public class ImportTemplateService : IImportTemplateService
                 {
                     Id = Guid.Parse(reader.GetString("id")),
                     TemplateId = templateId,
-                    Version = reader.GetString("version_number"),
-                    ChangeDescription = reader.IsDBNull("version_description") ? "" : reader.GetString("version_description"),
+                    PreviousVersion = "", // Will need to be calculated from previous records
+                    NewVersion = reader.GetString("version_number"),
+                    ChangeType = TemplateChangeType.VersionCreated, // Default type
+                    Description = reader.IsDBNull("version_description") ? "" : reader.GetString("version_description"),
                     ChangedBy = reader.IsDBNull("created_by") ? "" : reader.GetString("created_by"),
-                    ChangeDate = reader.GetDateTime("created_at"),
-                    IsCurrent = reader.GetBoolean("is_current")
+                    ChangedAt = reader.GetDateTime("created_at"),
+                    ChangedFields = new List<string>(), // Empty for now
+                    Metadata = new Dictionary<string, object>
+                    {
+                        { "IsCurrent", reader.GetBoolean("is_current") }
+                    }
                 };
                 changeHistory.Add(changeRecord);
             }
@@ -1198,7 +1204,13 @@ public class ImportTemplateService : IImportTemplateService
                 TemplateId = templateId,
                 Version1 = version1,
                 Version2 = version2,
-                ComparisonDate = DateTime.UtcNow
+                AreIdentical = false, // Will be determined by comparison
+                DifferencesSummary = "",
+                AddedFields = new List<string>(),
+                RemovedFields = new List<string>(),
+                ModifiedFields = new List<FieldComparison>(),
+                ComparedAt = DateTime.UtcNow,
+                Metadata = new Dictionary<string, object>()
             };
 
             // Compare basic properties
@@ -1218,6 +1230,14 @@ public class ImportTemplateService : IImportTemplateService
             _logger.LogError(ex, "Failed to compare template versions for template {TemplateId}", templateId);
             throw;
         }
+    }
+
+    /// <summary>
+    /// Compares two template versions and returns the differences (overload without CancellationToken)
+    /// </summary>
+    public async Task<TemplateComparisonResult> CompareTemplateVersionsAsync(Guid templateId, string fromVersion, string toVersion)
+    {
+        return await CompareTemplateVersionsAsync(templateId, fromVersion, toVersion, CancellationToken.None);
     }
 
     #endregion
@@ -1818,20 +1838,77 @@ public class ImportTemplateService : IImportTemplateService
 
     private void CompareBasicProperties(ImportTemplate template1, ImportTemplate template2, TemplateComparisonResult comparison)
     {
+        var differences = new List<string>();
+
         if (template1.Name != template2.Name)
-            comparison.Differences.Add(new TemplateDifference { Property = "Name", Value1 = template1.Name, Value2 = template2.Name });
+        {
+            comparison.ModifiedFields.Add(new FieldComparison
+            {
+                FieldName = "Name",
+                OldValue = template1.Name,
+                NewValue = template2.Name,
+                ChangeType = FieldChangeType.Modified,
+                ChangeDescription = $"Name changed from '{template1.Name}' to '{template2.Name}'"
+            });
+            differences.Add("Name");
+        }
 
         if (template1.Description != template2.Description)
-            comparison.Differences.Add(new TemplateDifference { Property = "Description", Value1 = template1.Description, Value2 = template2.Description });
+        {
+            comparison.ModifiedFields.Add(new FieldComparison
+            {
+                FieldName = "Description",
+                OldValue = template1.Description,
+                NewValue = template2.Description,
+                ChangeType = FieldChangeType.Modified,
+                ChangeDescription = "Description modified"
+            });
+            differences.Add("Description");
+        }
 
         if (template1.Category != template2.Category)
-            comparison.Differences.Add(new TemplateDifference { Property = "Category", Value1 = template1.Category, Value2 = template2.Category });
+        {
+            comparison.ModifiedFields.Add(new FieldComparison
+            {
+                FieldName = "Category",
+                OldValue = template1.Category,
+                NewValue = template2.Category,
+                ChangeType = FieldChangeType.Modified,
+                ChangeDescription = $"Category changed from '{template1.Category}' to '{template2.Category}'"
+            });
+            differences.Add("Category");
+        }
 
         if (template1.ConfidenceThreshold != template2.ConfidenceThreshold)
-            comparison.Differences.Add(new TemplateDifference { Property = "ConfidenceThreshold", Value1 = template1.ConfidenceThreshold.ToString(), Value2 = template2.ConfidenceThreshold.ToString() });
+        {
+            comparison.ModifiedFields.Add(new FieldComparison
+            {
+                FieldName = "ConfidenceThreshold",
+                OldValue = template1.ConfidenceThreshold.ToString(),
+                NewValue = template2.ConfidenceThreshold.ToString(),
+                ChangeType = FieldChangeType.Modified,
+                ChangeDescription = $"Confidence threshold changed from {template1.ConfidenceThreshold} to {template2.ConfidenceThreshold}"
+            });
+            differences.Add("ConfidenceThreshold");
+        }
 
         if (template1.AutoApply != template2.AutoApply)
-            comparison.Differences.Add(new TemplateDifference { Property = "AutoApply", Value1 = template1.AutoApply.ToString(), Value2 = template2.AutoApply.ToString() });
+        {
+            comparison.ModifiedFields.Add(new FieldComparison
+            {
+                FieldName = "AutoApply",
+                OldValue = template1.AutoApply.ToString(),
+                NewValue = template2.AutoApply.ToString(),
+                ChangeType = FieldChangeType.Modified,
+                ChangeDescription = $"Auto-apply setting changed from {template1.AutoApply} to {template2.AutoApply}"
+            });
+            differences.Add("AutoApply");
+        }
+
+        if (differences.Any())
+        {
+            comparison.DifferencesSummary += $"Basic properties changed: {string.Join(", ", differences)}. ";
+        }
     }
 
     private void CompareTemplateFields(List<TemplateField> fields1, List<TemplateField> fields2, TemplateComparisonResult comparison)
@@ -1842,22 +1919,28 @@ public class ImportTemplateService : IImportTemplateService
         // Check for added fields
         foreach (var field in fields2Dict.Values.Where(f => !fields1Dict.ContainsKey(f.Name)))
         {
-            comparison.Differences.Add(new TemplateDifference 
-            { 
-                Property = $"Field.{field.Name}", 
-                Value1 = null, 
-                Value2 = $"Added: {field.FieldType}" 
+            comparison.AddedFields.Add(field.Name);
+            comparison.ModifiedFields.Add(new FieldComparison
+            {
+                FieldName = field.Name,
+                OldValue = null,
+                NewValue = field.FieldType.ToString(),
+                ChangeType = FieldChangeType.Added,
+                ChangeDescription = $"Field '{field.Name}' of type '{field.FieldType}' was added"
             });
         }
 
         // Check for removed fields
         foreach (var field in fields1Dict.Values.Where(f => !fields2Dict.ContainsKey(f.Name)))
         {
-            comparison.Differences.Add(new TemplateDifference 
-            { 
-                Property = $"Field.{field.Name}", 
-                Value1 = $"Removed: {field.FieldType}", 
-                Value2 = null 
+            comparison.RemovedFields.Add(field.Name);
+            comparison.ModifiedFields.Add(new FieldComparison
+            {
+                FieldName = field.Name,
+                OldValue = field.FieldType.ToString(),
+                NewValue = null,
+                ChangeType = FieldChangeType.Removed,
+                ChangeDescription = $"Field '{field.Name}' of type '{field.FieldType}' was removed"
             });
         }
 
@@ -1868,28 +1951,52 @@ public class ImportTemplateService : IImportTemplateService
             var field2 = fields2Dict[fieldName];
 
             if (field1.FieldType != field2.FieldType)
-                comparison.Differences.Add(new TemplateDifference 
-                { 
-                    Property = $"Field.{fieldName}.Type", 
-                    Value1 = field1.FieldType.ToString(), 
-                    Value2 = field2.FieldType.ToString() 
+            {
+                comparison.ModifiedFields.Add(new FieldComparison
+                {
+                    FieldName = $"{fieldName}.Type",
+                    OldValue = field1.FieldType.ToString(),
+                    NewValue = field2.FieldType.ToString(),
+                    ChangeType = FieldChangeType.TypeChanged,
+                    ChangeDescription = $"Field '{fieldName}' type changed from '{field1.FieldType}' to '{field2.FieldType}'"
                 });
+            }
 
             if (field1.ExtractionMethod != field2.ExtractionMethod)
-                comparison.Differences.Add(new TemplateDifference 
-                { 
-                    Property = $"Field.{fieldName}.ExtractionMethod", 
-                    Value1 = field1.ExtractionMethod.ToString(), 
-                    Value2 = field2.ExtractionMethod.ToString() 
+            {
+                comparison.ModifiedFields.Add(new FieldComparison
+                {
+                    FieldName = $"{fieldName}.ExtractionMethod",
+                    OldValue = field1.ExtractionMethod.ToString(),
+                    NewValue = field2.ExtractionMethod.ToString(),
+                    ChangeType = FieldChangeType.ConfigurationChanged,
+                    ChangeDescription = $"Field '{fieldName}' extraction method changed from '{field1.ExtractionMethod}' to '{field2.ExtractionMethod}'"
                 });
+            }
 
             if (field1.IsRequired != field2.IsRequired)
-                comparison.Differences.Add(new TemplateDifference 
-                { 
-                    Property = $"Field.{fieldName}.IsRequired", 
-                    Value1 = field1.IsRequired.ToString(), 
-                    Value2 = field2.IsRequired.ToString() 
+            {
+                comparison.ModifiedFields.Add(new FieldComparison
+                {
+                    FieldName = $"{fieldName}.IsRequired",
+                    OldValue = field1.IsRequired.ToString(),
+                    NewValue = field2.IsRequired.ToString(),
+                    ChangeType = FieldChangeType.ConfigurationChanged,
+                    ChangeDescription = $"Field '{fieldName}' required setting changed from {field1.IsRequired} to {field2.IsRequired}"
                 });
+            }
+        }
+
+        // Update summary
+        if (comparison.AddedFields.Any() || comparison.RemovedFields.Any() || comparison.ModifiedFields.Any(f => f.FieldName.Contains(".")))
+        {
+            var fieldSummary = new List<string>();
+            if (comparison.AddedFields.Any()) fieldSummary.Add($"{comparison.AddedFields.Count} added");
+            if (comparison.RemovedFields.Any()) fieldSummary.Add($"{comparison.RemovedFields.Count} removed");
+            var modifiedFieldCount = comparison.ModifiedFields.Count(f => f.FieldName.Contains("."));
+            if (modifiedFieldCount > 0) fieldSummary.Add($"{modifiedFieldCount} modified");
+            
+            comparison.DifferencesSummary += $"Fields: {string.Join(", ", fieldSummary)}. ";
         }
     }
 
@@ -1900,24 +2007,31 @@ public class ImportTemplateService : IImportTemplateService
 
         if (zones1.Count != zones2.Count)
         {
-            comparison.Differences.Add(new TemplateDifference 
-            { 
-                Property = "ExtractionZones.Count", 
-                Value1 = zones1.Count.ToString(), 
-                Value2 = zones2.Count.ToString() 
+            comparison.ModifiedFields.Add(new FieldComparison
+            {
+                FieldName = "ExtractionZones.Count",
+                OldValue = zones1.Count.ToString(),
+                NewValue = zones2.Count.ToString(),
+                ChangeType = FieldChangeType.ConfigurationChanged,
+                ChangeDescription = $"Extraction zones count changed from {zones1.Count} to {zones2.Count}"
             });
+
+            var zoneChanges = Math.Abs(zones1.Count - zones2.Count);
+            comparison.DifferencesSummary += $"Extraction zones: {zoneChanges} zone(s) {(zones2.Count > zones1.Count ? "added" : "removed")}. ";
         }
 
-        // More detailed zone comparison could be added here
-        var zoneChanges = Math.Abs(zones1.Count - zones2.Count);
-        if (zoneChanges > 0)
+        // Set final comparison result
+        comparison.AreIdentical = !comparison.AddedFields.Any() && 
+                                  !comparison.RemovedFields.Any() && 
+                                  !comparison.ModifiedFields.Any();
+
+        if (comparison.AreIdentical)
         {
-            comparison.Differences.Add(new TemplateDifference 
-            { 
-                Property = "ExtractionZones.Changes", 
-                Value1 = zones1.Count.ToString(), 
-                Value2 = zones2.Count.ToString() 
-            });
+            comparison.DifferencesSummary = "Templates are identical.";
+        }
+        else if (string.IsNullOrEmpty(comparison.DifferencesSummary))
+        {
+            comparison.DifferencesSummary = "Templates have differences.";
         }
     }
 
@@ -3251,104 +3365,6 @@ public class ImportTemplateService : IImportTemplateService
 
     #endregion
 
-    #region Import/Export Helper Methods
-
-    private async Task<string> GenerateUniqueTemplateNameAsync(string baseName, CancellationToken cancellationToken)
-    {
-        var uniqueName = baseName;
-        var counter = 1;
-
-        while (await GetTemplateByNameAsync(uniqueName, cancellationToken) != null)
-        {
-            uniqueName = $"{baseName} ({counter})";
-            counter++;
-        }
-
-        return uniqueName;
-    }
-
-    private async Task<ImportTemplate> HandleTemplateConflictAsync(ImportTemplate template, ImportTemplate existingTemplate, Core.Interfaces.TemplateImportOptions importOptions, CancellationToken cancellationToken)
-    {
-        switch (importOptions.ConflictResolution)
-        {
-            case Core.Interfaces.TemplateConflictResolution.Fail:
-                throw new InvalidOperationException($"Template with name '{template.Name}' already exists");
-
-            case Core.Interfaces.TemplateConflictResolution.Skip:
-                throw new InvalidOperationException($"Template '{template.Name}' skipped due to conflict");
-
-            case Core.Interfaces.TemplateConflictResolution.Overwrite:
-                template.Id = existingTemplate.Id;
-                template.CreatedAt = existingTemplate.CreatedAt;
-                template.CreatedBy = existingTemplate.CreatedBy;
-                return await UpdateTemplateAsync(template, cancellationToken);
-
-            case Core.Interfaces.TemplateConflictResolution.Merge:
-                return await MergeTemplatesAsync(existingTemplate, template, importOptions, cancellationToken);
-
-            case Core.Interfaces.TemplateConflictResolution.Rename:
-                template.Name = await GenerateUniqueTemplateNameAsync(template.Name, cancellationToken);
-                return await CreateTemplateAsync(template, cancellationToken);
-
-            default:
-                throw new ArgumentException($"Unsupported conflict resolution: {importOptions.ConflictResolution}");
-        }
-    }
-
-    private async Task<ImportTemplate> MergeTemplatesAsync(ImportTemplate existingTemplate, ImportTemplate newTemplate, Core.Interfaces.TemplateImportOptions importOptions, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Merging template: {TemplateName}", existingTemplate.Name);
-
-        // Start with existing template
-        var mergedTemplate = existingTemplate;
-
-        // Merge description if new one is provided
-        if (!string.IsNullOrEmpty(newTemplate.Description))
-        {
-            mergedTemplate.Description = newTemplate.Description;
-        }
-
-        // Merge tags
-        foreach (var tag in newTemplate.Tags)
-        {
-            if (!mergedTemplate.Tags.Contains(tag))
-            {
-                mergedTemplate.Tags.Add(tag);
-            }
-        }
-
-        // Merge supported formats
-        foreach (var format in newTemplate.SupportedFormats)
-        {
-            if (!mergedTemplate.SupportedFormats.Contains(format))
-            {
-                mergedTemplate.SupportedFormats.Add(format);
-            }
-        }
-
-        // Merge fields (add new fields, don't overwrite existing ones)
-        var existingFieldNames = mergedTemplate.Fields.Select(f => f.Name).ToHashSet();
-        foreach (var newField in newTemplate.Fields)
-        {
-            if (!existingFieldNames.Contains(newField.Name))
-            {
-                newField.Id = Guid.NewGuid(); // Assign new ID
-                mergedTemplate.Fields.Add(newField);
-            }
-        }
-
-        // Update metadata with merge information
-        mergedTemplate.LastModifiedAt = DateTime.UtcNow;
-        mergedTemplate.LastModifiedBy = importOptions.ImportedBy ?? Environment.UserName;
-        mergedTemplate.Metadata["MergedAt"] = DateTime.UtcNow;
-        mergedTemplate.Metadata["MergedFrom"] = newTemplate.Id.ToString();
-
-        // Update the template
-        return await UpdateTemplateAsync(mergedTemplate, cancellationToken);
-    }
-
-    #endregion
-
 }
 
 /// <summary>
@@ -3449,59 +3465,3 @@ public enum TemplateImportAction
     Failed
 }
 
-/// <summary>
-/// Represents a change record in template history
-/// </summary>
-public class TemplateChangeRecord
-{
-    public Guid Id { get; set; }
-    public Guid TemplateId { get; set; }
-    public string Version { get; set; } = string.Empty;
-    public string ChangeDescription { get; set; } = string.Empty;
-    public string ChangedBy { get; set; } = string.Empty;
-    public DateTime ChangeDate { get; set; }
-    public bool IsCurrent { get; set; }
-}
-
-/// <summary>
-/// Results of comparing two template versions
-/// </summary>
-public class TemplateComparisonResult
-{
-    public Guid TemplateId { get; set; }
-    public string Version1 { get; set; } = string.Empty;
-    public string Version2 { get; set; } = string.Empty;
-    public DateTime ComparisonDate { get; set; }
-    public List<TemplateDifference> Differences { get; set; } = new();
-    public bool HasDifferences => Differences.Count > 0;
-    public int DifferenceCount => Differences.Count;
-}
-
-/// <summary>
-/// Represents a specific difference between template versions
-/// </summary>
-public class TemplateDifference
-{
-    public string Property { get; set; } = string.Empty;
-    public string? Value1 { get; set; }
-    public string? Value2 { get; set; }
-    public TemplateDifferenceType DifferenceType 
-    { 
-        get
-        {
-            if (Value1 == null) return TemplateDifferenceType.Added;
-            if (Value2 == null) return TemplateDifferenceType.Removed;
-            return TemplateDifferenceType.Modified;
-        }
-    }
-}
-
-/// <summary>
-/// Types of differences between template versions
-/// </summary>
-public enum TemplateDifferenceType
-{
-    Added,
-    Removed,
-    Modified
-} 
