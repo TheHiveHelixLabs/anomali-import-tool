@@ -15,6 +15,7 @@
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.6" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="9.0.6" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="9.0.6" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="9.0.6" />
     
     <!-- Serilog (matching Infrastructure versions) -->
     <PackageVersion Include="Serilog" Version="4.3.0" />
@@ -24,5 +25,12 @@
     
     <!-- JSON processing -->
     <PackageVersion Include="System.Text.Json" Version="9.0.6" />
+    
+    <!-- Data access -->
+    <PackageVersion Include="Microsoft.Data.Sqlite" Version="9.0.6" />
+    
+    <!-- Polly for resilience -->
+    <PackageVersion Include="Polly" Version="8.5.0" />
+    <PackageVersion Include="Polly.Extensions.Http" Version="3.0.0" />
   </ItemGroup>
 </Project>

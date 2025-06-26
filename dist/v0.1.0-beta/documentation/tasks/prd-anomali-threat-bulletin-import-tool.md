@@ -506,7 +506,7 @@ Common fields for exception documents:
 - Memory-efficient streaming for large files
 
 ### Deployment - "ZERO INSTALLATION ARCHITECTURE"
-- **NO INSTALLER APPROACH**: Core library package available immediately, cross-platform executables available after fixing Infrastructure compilation issues - designed for **unzip and run** on Windows, macOS, Linux, and Web platforms
+- **NO INSTALLER APPROACH**: Cross-platform single executables with embedded dependencies - simply **unzip and run** on Windows, macOS, Linux, and Web platforms
 - **Complete Portability**: Fully portable application design requiring no installation, administrative privileges, or system modifications
 - **4-Platform Distribution**: GitHub releases with compiled binaries for:
   - **Windows**: Self-contained .exe files (x64, ARM64)

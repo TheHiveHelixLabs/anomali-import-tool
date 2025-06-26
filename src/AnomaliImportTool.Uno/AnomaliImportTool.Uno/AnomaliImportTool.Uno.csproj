@@ -43,7 +43,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
     
-    <!-- Logging -->
+    <!-- Logging with compatible versions -->
     <PackageReference Include="Serilog" />
     <PackageReference Include="Serilog.Extensions.Hosting" />
     <PackageReference Include="Serilog.Sinks.File" />
@@ -51,6 +51,16 @@
     
     <!-- JSON processing -->
     <PackageReference Include="System.Text.Json" />
+    
+    <!-- Data access -->
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+    
+    <!-- HTTP client for API integration -->
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    
+    <!-- Polly for resilience -->
+    <PackageReference Include="Polly" />
+    <PackageReference Include="Polly.Extensions.Http" />
   </ItemGroup>
 
   <!-- Project References - Core and Infrastructure -->

@@ -2,8 +2,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
-using Win2D.UI.Xaml;
-using Win2D;
 using System.Numerics;
 using Windows.UI;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,7 +15,7 @@ namespace AnomaliImportTool.UI.Views;
 
 /// <summary>
 /// Main window for the Anomali Import Tool Living Workspace
-/// Provides WinUI 3 + Win2D integration with corporate branding and advanced UI features
+/// Provides WinUI 3 integration with corporate branding and advanced UI features
 /// </summary>
 public sealed partial class MainWindow : Window
 {
@@ -27,10 +25,6 @@ public sealed partial class MainWindow : Window
     private readonly IAnimationService _animationService;
     private readonly IAccessibilityService _accessibilityService;
     private readonly MainWindowViewModel _viewModel;
-    
-    // Win2D Resources
-    private CanvasRenderTarget? _backgroundRenderTarget;
-    private bool _isResourcesCreated = false;
     
     /// <summary>
     /// Initializes a new instance of the MainWindow
@@ -84,92 +78,6 @@ public sealed partial class MainWindow : Window
         }
     }
     
-    #region Win2D Graphics Integration
-    
-    /// <summary>
-    /// Create Win2D resources for GPU-accelerated graphics
-    /// </summary>
-    private void CanvasControl_CreateResources(CanvasControl sender, CanvasCreateResourcesEventArgs args)
-    {
-        try
-        {
-            // Create background render target for subtle animations
-            _backgroundRenderTarget = new CanvasRenderTarget(
-                sender, 
-                (float)sender.ActualWidth, 
-                (float)sender.ActualHeight);
-            
-            _isResourcesCreated = true;
-            _logger.LogDebug("Win2D resources created successfully");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to create Win2D resources");
-        }
-    }
-    
-    /// <summary>
-    /// Draw Win2D graphics for background effects
-    /// </summary>
-    private void CanvasControl_Draw(CanvasControl sender, CanvasDrawEventArgs args)
-    {
-        if (!_isResourcesCreated || _backgroundRenderTarget == null)
-            return;
-            
-        try
-        {
-            var session = args.DrawingSession;
-            
-            // Draw subtle background gradient
-            DrawBackgroundEffects(session, sender);
-            
-            // Draw connection lines if in advanced mode
-            if (_viewModel.IsAdvancedMode)
-            {
-                DrawConnectionLines(session);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error during Win2D drawing");
-        }
-    }
-    
-    /// <summary>
-    /// Draw subtle background effects
-    /// </summary>
-    private void DrawBackgroundEffects(CanvasDrawingSession session, CanvasControl control)
-    {
-        // Create subtle grid pattern for professional look
-        var gridColor = Color.FromArgb(10, 59, 130, 246); // Very light corporate blue
-        var gridSize = 50f;
-        
-        for (float x = 0; x < control.ActualWidth; x += gridSize)
-        {
-            session.DrawLine(x, 0, x, (float)control.ActualHeight, gridColor, 0.5f);
-        }
-        
-        for (float y = 0; y < control.ActualHeight; y += gridSize)
-        {
-            session.DrawLine(0, y, (float)control.ActualWidth, y, gridColor, 0.5f);
-        }
-    }
-    
-    /// <summary>
-    /// Draw connection lines for advanced mode
-    /// </summary>
-    private void DrawConnectionLines(CanvasDrawingSession session)
-    {
-        // Draw animated connection lines between document cards
-        // This will be expanded when document cards are implemented
-        var connectionColor = Color.FromArgb(100, 59, 130, 246);
-        
-        // Placeholder for future connection line drawing
-        _logger.LogDebug("Drawing connection lines for advanced mode");
-    }
-    
-    #endregion
-    
     #region Window Controls Event Handlers
     
     /// <summary>
@@ -197,13 +105,9 @@ public sealed partial class MainWindow : Window
         {
             var isMaximized = await _windowManagementService.ToggleMaximizeRestoreAsync(this);
             
-            // Update button icon
-            MaximizeRestoreButton.Content = isMaximized ? "\uE923" : "\uE922"; // Restore vs Maximize icon
-            
-            // Update tooltip
-            ToolTipService.SetToolTip(MaximizeRestoreButton, isMaximized ? "Restore" : "Maximize");
-            
-            await _accessibilityService.AnnounceAsync(isMaximized ? "Window maximized" : "Window restored");
+            // Update button icon and accessibility announcement
+            var announcement = isMaximized ? "Window maximized" : "Window restored";
+            await _accessibilityService.AnnounceAsync(announcement);
         }
         catch (Exception ex)
         {
@@ -219,17 +123,35 @@ public sealed partial class MainWindow : Window
         try
         {
             // Check if there are unsaved changes
-            var canClose = await _viewModel.CanCloseAsync();
-            
-            if (canClose)
+            if (_viewModel.HasUnsavedChanges)
             {
-                await _accessibilityService.AnnounceAsync("Application closing");
-                this.Close();
+                var dialog = new ContentDialog
+                {
+                    Title = "Unsaved Changes",
+                    Content = "You have unsaved changes. Do you want to save before closing?",
+                    PrimaryButtonText = "Save and Close",
+                    SecondaryButtonText = "Close Without Saving",
+                    CloseButtonText = "Cancel",
+                    XamlRoot = this.Content.XamlRoot
+                };
+                
+                var result = await dialog.ShowAsync();
+                
+                if (result == ContentDialogResult.Primary)
+                {
+                    await _viewModel.SaveChangesAsync();
+                }
+                else if (result == ContentDialogResult.None)
+                {
+                    return; // Cancel close
+                }
             }
+            
+            this.Close();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during window close");
+            _logger.LogError(ex, "Failed to close window");
         }
     }
     
@@ -238,30 +160,30 @@ public sealed partial class MainWindow : Window
     #region Navigation Event Handlers
     
     /// <summary>
-    /// Handle navigation failure
+    /// Handle navigation failures
     /// </summary>
     private async void MainContentFrame_NavigationFailed(object sender, NavigationFailedEventArgs e)
     {
-        _logger.LogError(e.Exception, "Navigation failed to {SourcePageType}", e.SourcePageType);
-        
-        await ShowErrorDialogAsync(
-            "Navigation Error", 
-            $"Failed to navigate to {e.SourcePageType.Name}. Please try again.");
-            
-        // Try to navigate back to dashboard
         try
         {
+            _logger.LogError("Navigation failed to {SourcePageType}: {Exception}", 
+                e.SourcePageType?.Name, e.Exception);
+            
+            await ShowErrorDialogAsync("Navigation Error", 
+                $"Failed to navigate to {e.SourcePageType?.Name}. Please try again.");
+            
+            // Navigate back to dashboard as fallback
             await _navigationService.NavigateToAsync(typeof(DashboardView));
         }
-        catch (Exception navEx)
+        catch (Exception ex)
         {
-            _logger.LogCritical(navEx, "Failed to navigate to dashboard after navigation error");
+            _logger.LogError(ex, "Failed to handle navigation failure");
         }
     }
     
     #endregion
     
-    #region Utility Methods
+    #region UI Helper Methods
     
     /// <summary>
     /// Show error dialog to user
@@ -287,80 +209,82 @@ public sealed partial class MainWindow : Window
     }
     
     /// <summary>
-    /// Update status bar text
+    /// Update status text in the UI
     /// </summary>
     public void UpdateStatusText(string status)
     {
         try
         {
-            StatusText.Text = status;
+            _viewModel.StatusText = status;
             _logger.LogDebug("Status updated: {Status}", status);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to update status text");
+            _logger.LogError(ex, "Failed to update status text");
         }
     }
     
     /// <summary>
-    /// Show/hide progress indicator
+    /// Set progress indicator visibility and text
     /// </summary>
     public void SetProgressIndicator(bool isVisible, string? statusText = null)
     {
         try
         {
-            StatusProgressRing.IsActive = isVisible;
-            StatusProgressRing.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
+            _viewModel.IsProgressVisible = isVisible;
             
-            if (statusText != null)
+            if (!string.IsNullOrEmpty(statusText))
             {
-                UpdateStatusText(statusText);
+                _viewModel.ProgressText = statusText;
             }
+            
+            _logger.LogDebug("Progress indicator: {IsVisible}, Text: {StatusText}", 
+                isVisible, statusText);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to set progress indicator");
+            _logger.LogError(ex, "Failed to set progress indicator");
         }
     }
     
     /// <summary>
-    /// Update mode indicator
+    /// Update mode indicator (Simple/Advanced)
     /// </summary>
     public void UpdateModeIndicator(string mode)
     {
         try
         {
-            ModeIndicatorText.Text = $"{mode} Mode";
-            _logger.LogDebug("Mode indicator updated: {Mode}", mode);
+            _viewModel.CurrentMode = mode;
+            _logger.LogDebug("Mode updated: {Mode}", mode);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to update mode indicator");
+            _logger.LogError(ex, "Failed to update mode indicator");
         }
     }
     
     #endregion
     
-    #region Cleanup
+    #region Window Lifecycle
     
     /// <summary>
-    /// Clean up resources when window is closing
+    /// Handle window closed event
     /// </summary>
     protected override void OnClosed(WindowEventArgs args)
     {
         try
         {
-            // Dispose Win2D resources
-            _backgroundRenderTarget?.Dispose();
+            _logger.LogInformation("MainWindow closing");
             
-            _logger.LogInformation("MainWindow resources cleaned up");
+            // Cleanup resources
+            _viewModel?.Dispose();
+            
+            base.OnClosed(args);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Error during resource cleanup");
+            _logger.LogError(ex, "Error during window close");
         }
-        
-        base.OnClosed(args);
     }
     
     #endregion

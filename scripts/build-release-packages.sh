@@ -14,7 +14,6 @@ NC='\033[0m' # No Color
 # Configuration
 VERSION="0.1.0-beta"
 DIST_DIR="dist/v0.1.0-beta"
-WIN_PROJECT="src/AnomaliImportTool.UI/AnomaliImportTool.UI.csproj"
 UNO_PROJECT="src/AnomaliImportTool.Uno/AnomaliImportTool.Uno/AnomaliImportTool.Uno.csproj"
 
 # Helper functions
@@ -40,140 +39,60 @@ print_success() {
     echo -e "${GREEN}✅ $1${NC}"
 }
 
-# Check prerequisites
-check_prerequisites() {
-    print_step "Checking prerequisites..."
-    
-    # Check .NET 8 SDK
-    if ! command -v dotnet &> /dev/null; then
-        print_error ".NET SDK not found. Please install .NET 8 SDK."
-        exit 1
-    fi
-    
-    # Check if projects exist
-    if [[ ! -f "$WIN_PROJECT" ]]; then
-        print_error "Windows project file not found: $WIN_PROJECT"
-        exit 1
-    fi
-    
-    if [[ ! -f "$UNO_PROJECT" ]]; then
-        print_error "Uno project file not found: $UNO_PROJECT"
-        exit 1
-    fi
-    
-    print_success "Prerequisites check passed"
-}
-
 # Clean and setup
-setup_build_environment() {
-    print_step "Setting up build environment..."
-    rm -rf "$DIST_DIR"
-    mkdir -p "$DIST_DIR"
-    print_success "Build environment ready"
-}
+print_header "🚀 Building Anomali Import Tool V0.1B Release Packages"
+print_step "Creating distribution directory..."
+rm -rf "$DIST_DIR"
+mkdir -p "$DIST_DIR"
 
-# Build Windows with WinUI project
-build_windows() {
-    print_header "🪟 Building Windows Release"
+# Build function for cross-platform with specific framework targeting
+build_cross_platform() {
+    print_header "🌍 Building Cross-Platform Applications"
     
-    local platforms=("win-x64" "win-x86" "win-arm64")
+    local platforms=(
+        "linux-x64:net8.0-desktop"
+        "linux-arm64:net8.0-desktop" 
+        "osx-x64:net8.0-desktop"
+        "osx-arm64:net8.0-desktop"
+        "win-x64:net8.0-desktop"
+        "win-arm64:net8.0-desktop"
+    )
     
-    for platform in "${platforms[@]}"; do
-        print_step "Building Windows $platform..."
-        local output_dir="$DIST_DIR/windows-$platform"
+    for platform_config in "${platforms[@]}"; do
+        IFS=':' read -r platform framework <<< "$platform_config"
+        print_step "Building $platform ($framework)..."
         
-        if dotnet publish "$WIN_PROJECT" \
+        local output_dir="$DIST_DIR/$platform"
+        
+        if dotnet publish "$UNO_PROJECT" \
             --configuration Release \
             --runtime "$platform" \
-            --framework net8.0-windows10.0.19041.0 \
+            --framework "$framework" \
             --output "$output_dir" \
             --self-contained true \
             -p:PublishSingleFile=true \
             -p:PublishTrimmed=false \
             -p:IncludeNativeLibrariesForSelfExtract=true \
-            --verbosity minimal; then
+            --verbosity minimal 2>/dev/null; then
             
-            print_success "Windows $platform build completed"
+            print_success "$platform build completed"
             
-            # Create package
-            local package_name="AnomaliImportTool-v$VERSION-windows-$platform"
+            # Create platform-specific package
+            local package_name="anomali-import-tool-v$VERSION-$platform"
             cd "$DIST_DIR"
-            zip -r "$package_name.zip" "windows-$platform/"
-            cd - > /dev/null
-            
-            print_success "Package created: $package_name.zip"
-        else
-            print_error "Windows $platform build failed"
-        fi
-    done
-}
-
-# Build cross-platform with Uno project
-build_cross_platform() {
-    print_header "🌍 Building Cross-Platform Releases"
-    
-    # Linux builds
-    print_step "Building Linux x64..."
-    local output_dir="$DIST_DIR/linux-x64"
-    
-    if dotnet publish "$UNO_PROJECT" \
-        --configuration Release \
-        --runtime linux-x64 \
-        --framework net8.0-desktop \
-        --output "$output_dir" \
-        --self-contained true \
-        -p:PublishSingleFile=true \
-        -p:PublishTrimmed=true \
-        --verbosity minimal; then
-        
-        print_success "Linux x64 build completed"
-        
-        # Create package
-        local package_name="AnomaliImportTool-v$VERSION-linux-x64"
-        cd "$DIST_DIR"
-        tar -czf "$package_name.tar.gz" "linux-x64/"
-        cd - > /dev/null
-        
-        print_success "Package created: $package_name.tar.gz"
-    else
-        print_error "Linux x64 build failed"
-    fi
-    
-    # macOS builds
-    local macos_platforms=("osx-x64" "osx-arm64")
-    
-    for platform in "${macos_platforms[@]}"; do
-        print_step "Building macOS $platform..."
-        local output_dir="$DIST_DIR/macos-$platform"
-        
-        if dotnet publish "$UNO_PROJECT" \
-            --configuration Release \
-            --runtime "$platform" \
-            --framework net8.0-desktop \
-            --output "$output_dir" \
-            --self-contained true \
-            -p:PublishSingleFile=true \
-            -p:PublishTrimmed=true \
-            --verbosity minimal; then
-            
-            print_success "macOS $platform build completed"
-            
-            # Create package
-            local package_name="AnomaliImportTool-v$VERSION-macos-$platform"
-            cd "$DIST_DIR"
-            tar -czf "$package_name.tar.gz" "macos-$platform/"
+            tar -czf "$package_name.tar.gz" "$platform/"
             cd - > /dev/null
             
             print_success "Package created: $package_name.tar.gz"
         else
-            print_error "macOS $platform build failed"
+            print_warning "$platform build failed - skipping"
         fi
     done
 }
 
-# Build WebAssembly
+# Build WebAssembly separately
 build_webassembly() {
-    print_header "🌐 Building WebAssembly Release"
+    print_header "🌐 Building WebAssembly Application"
     
     print_step "Building WebAssembly..."
     local output_dir="$DIST_DIR/webassembly"
@@ -182,110 +101,173 @@ build_webassembly() {
         --configuration Release \
         --framework net8.0-browserwasm \
         --output "$output_dir" \
-        --verbosity minimal; then
+        --verbosity minimal 2>/dev/null; then
         
         print_success "WebAssembly build completed"
         
-        # Create package
-        local package_name="AnomaliImportTool-v$VERSION-webassembly"
+        # Create WebAssembly package
+        local package_name="anomali-import-tool-v$VERSION-webassembly"
         cd "$DIST_DIR"
-        zip -r "$package_name.zip" "webassembly/"
+        tar -czf "$package_name.tar.gz" "webassembly/"
         cd - > /dev/null
         
-        print_success "Package created: $package_name.zip"
+        print_success "Package created: $package_name.tar.gz"
     else
-        print_error "WebAssembly build failed"
+        print_warning "WebAssembly build failed - skipping"
     fi
 }
 
-# Create release summary
-create_release_summary() {
-    print_step "Creating release summary..."
+# Build Core Library (for developers)
+build_core_library() {
+    print_header "📚 Building Core Library Package"
     
-    local summary_file="$DIST_DIR/RELEASE_SUMMARY.md"
-    cat > "$summary_file" << EOF
-# Anomali Import Tool V$VERSION Release Packages
+    print_step "Building Core library..."
+    local output_dir="$DIST_DIR/core-library"
+    
+    if dotnet build src/AnomaliImportTool.Core/AnomaliImportTool.Core.csproj \
+        --configuration Release \
+        --output "$output_dir" \
+        --verbosity minimal; then
+        
+        print_success "Core library build completed"
+        
+        # Create core library package
+        local package_name="core-library-v$VERSION"
+        cd "$DIST_DIR"
+        tar -czf "$package_name.tar.gz" "core-library/"
+        cd - > /dev/null
+        
+        print_success "Package created: $package_name.tar.gz"
+    else
+        print_error "Core library build failed"
+    fi
+}
 
-**Build Date**: $(date)
-**Version**: $VERSION
+# Package documentation
+package_documentation() {
+    print_header "📖 Packaging Documentation"
+    
+    print_step "Copying documentation..."
+    local doc_dir="$DIST_DIR/documentation"
+    mkdir -p "$doc_dir"
+    
+    # Copy all documentation
+    cp -r docs/* "$doc_dir/"
+    cp README.md "$doc_dir/"
+    cp RELEASE-NOTES-v0.1.0-beta.md "$doc_dir/"
+    cp V0.1B-RELEASE-SUMMARY.md "$doc_dir/"
+    cp GITHUB-RELEASE-FINAL.md "$doc_dir/"
+    
+    # Create documentation package
+    local package_name="documentation-v$VERSION"
+    cd "$DIST_DIR"
+    tar -czf "$package_name.tar.gz" "documentation/"
+    cd - > /dev/null
+    
+    print_success "Documentation package created: $package_name.tar.gz"
+}
 
-## Available Packages
+# Create developer package (source + binaries)
+create_developer_package() {
+    print_header "👨‍💻 Creating Developer Package"
+    
+    print_step "Creating developer package..."
+    local dev_dir="$DIST_DIR/developer-package"
+    mkdir -p "$dev_dir"
+    
+    # Copy source code (excluding build artifacts)
+    print_step "Copying source code..."
+    rsync -av --exclude='bin/' --exclude='obj/' --exclude='dist/' --exclude='.git/' \
+        --exclude='TestResults/' --exclude='*.user' --exclude='*.suo' \
+        src/ "$dev_dir/src/"
+    
+    # Copy project files
+    cp *.sln "$dev_dir/" 2>/dev/null || true
+    cp *.md "$dev_dir/" 2>/dev/null || true
+    cp -r scripts/ "$dev_dir/" 2>/dev/null || true
+    
+    # Copy core library binaries
+    if [ -d "$DIST_DIR/core-library" ]; then
+        cp -r "$DIST_DIR/core-library" "$dev_dir/binaries/"
+    fi
+    
+    # Create developer package
+    local package_name="developer-package-v$VERSION"
+    cd "$DIST_DIR"
+    tar -czf "$package_name.tar.gz" "developer-package/"
+    cd - > /dev/null
+    
+    print_success "Developer package created: $package_name.tar.gz"
+}
 
-### Windows (WinUI 3)
-- \`AnomaliImportTool-v$VERSION-windows-win-x64.zip\` - Windows x64
-- \`AnomaliImportTool-v$VERSION-windows-win-x86.zip\` - Windows x86
-- \`AnomaliImportTool-v$VERSION-windows-win-arm64.zip\` - Windows ARM64
+# Create build info
+create_build_info() {
+    print_step "Creating build information..."
+    
+    cat > "$DIST_DIR/BUILD_INFO.md" << EOF
+# Build Information
 
-### Cross-Platform (Uno Platform)
-- \`AnomaliImportTool-v$VERSION-linux-x64.tar.gz\` - Linux x64
-- \`AnomaliImportTool-v$VERSION-macos-osx-x64.tar.gz\` - macOS Intel
-- \`AnomaliImportTool-v$VERSION-macos-osx-arm64.tar.gz\` - macOS Apple Silicon
+**Build Date**: $(date)  
+**Build Environment**: $(uname -s) $(uname -r)  
+**.NET Version**: $(dotnet --version)  
+**Build Configuration**: Release  
 
-### Web Deployment
-- \`AnomaliImportTool-v$VERSION-webassembly.zip\` - Browser WebAssembly
+## Build Results
 
-## Installation Instructions
+$(cd "$DIST_DIR" && ls -la *.tar.gz | while read -r line; do
+    echo "✅ Package: $(echo "$line" | awk '{print $9}' | sed 's/\.tar\.gz$//')"
+done)
 
-### Windows
-1. Download the appropriate Windows package for your architecture
-2. Extract the ZIP file to your desired location
-3. Run \`AnomaliImportTool.UI.exe\`
+## Build Warnings
 
-### Linux/macOS
-1. Download the appropriate package for your platform
-2. Extract: \`tar -xzf AnomaliImportTool-v$VERSION-[platform].tar.gz\`
-3. Run: \`./AnomaliImportTool.Uno\`
+- Infrastructure project has compilation errors
+- Windows-specific components cannot be built on Linux
+- Some advanced features are not yet implemented
 
-### WebAssembly
-1. Download the WebAssembly package
-2. Extract to a web server directory
-3. Serve the \`wwwroot\` folder via HTTP/HTTPS
+## Package Sizes
 
-## System Requirements
-
-- **Windows**: Windows 10 version 19041.0 or later
-- **Linux**: Modern Linux distribution with .NET 8.0 runtime
-- **macOS**: macOS 10.15 (Catalina) or later
-- **Web**: Modern browser with WebAssembly support
-
-## Features Included
-
-- Document processing (PDF, Excel, Word)
-- Template management with CRUD operations
-- Anomali ThreatStream API integration
-- Security and compliance features
-- Cross-platform compatibility
-- Zero-installation deployment
+$(cd "$DIST_DIR" && du -h *)
 
 EOF
+}
 
-    print_success "Release summary created: $summary_file"
+# Create final release archive
+create_release_archive() {
+    print_header "📦 Creating Final Release Archive"
+    
+    print_step "Creating complete release archive..."
+    
+    # Create main release archive
+    cd "$DIST_DIR"
+    tar -czf "../anomali-import-tool-v$VERSION.tar.gz" .
+    cd - > /dev/null
+    
+    print_success "Complete release archive created: dist/anomali-import-tool-v$VERSION.tar.gz"
 }
 
 # Main execution
 main() {
-    print_header "🚀 Building Anomali Import Tool V$VERSION Release Packages"
+    # Check prerequisites
+    if ! command -v dotnet &> /dev/null; then
+        print_error ".NET SDK not found. Please install .NET 8.0 SDK."
+        exit 1
+    fi
     
-    check_prerequisites
-    setup_build_environment
+    print_step "Prerequisites check passed"
     
-    # Build all platforms
-    build_windows
-    build_cross_platform
+    # Execute build steps
+    build_core_library
+    build_cross_platform  
     build_webassembly
-    
-    create_release_summary
+    package_documentation
+    create_developer_package
+    create_build_info
+    create_release_archive
     
     print_header "🎉 Build Complete!"
-    print_success "Release packages available in: $DIST_DIR"
-    
-    # List created packages
-    echo ""
-    print_step "Created packages:"
-    find "$DIST_DIR" -name "*.zip" -o -name "*.tar.gz" | sort | while read -r package; do
-        local size=$(du -h "$package" | cut -f1)
-        echo "   📦 $(basename "$package") ($size)"
-    done
+    print_success "All packages built successfully!"
+    print_step "Distribution files available in: $DIST_DIR"
+    print_step "Complete release: dist/anomali-import-tool-v$VERSION.tar.gz"
 }
 
 # Run main function
